@@ -25,8 +25,10 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, onRemov
       const surname = paper.authors[0].split(' ').pop()?.replace(/[^a-zA-Z]/g, '').toLowerCase() || 'author';
       const citeKey = `${surname}${paper.publicationDate}`;
       
+      const doi = paper.doi || '';
+
       // Handle arXiv formatting properly
-      const isArxiv = /^\d{4}\.\d{4,5}/.test(paper.doi) || paper.doi.toLowerCase().includes('arxiv');
+      const isArxiv = /^\d{4}\.\d{4,5}/.test(doi) || doi.toLowerCase().includes('arxiv');
       
       let entry = `@article{${citeKey},\n`;
       entry += `  title={${paper.title}},\n`;
@@ -35,11 +37,11 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, onRemov
       entry += `  journal={${isArxiv ? 'arXiv Preprint' : 'Nexus Research Repository'}},\n`;
       
       if (isArxiv) {
-        entry += `  eprint={${paper.doi.replace(/arXiv:/i, '')}},\n`;
+        entry += `  eprint={${doi.replace(/arXiv:/i, '')}},\n`;
         entry += `  archivePrefix={arXiv},\n`;
-        entry += `  url={https://arxiv.org/abs/${paper.doi.replace(/arXiv:/i, '')}}\n`;
+        entry += `  url={https://arxiv.org/abs/${doi.replace(/arXiv:/i, '')}}\n`;
       } else {
-        entry += `  url={https://doi.org/${paper.doi}}\n`;
+        entry += `  url={https://doi.org/${doi}}\n`;
       }
       
       entry += `}`;

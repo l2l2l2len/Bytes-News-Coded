@@ -21,6 +21,7 @@ export interface Byte {
   isLiked?: boolean;
   isSaved?: boolean;
   sourceUrl?: string;
+  doi?: string;
 }
 
 export type Paper = Byte;
