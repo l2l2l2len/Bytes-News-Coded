@@ -4,7 +4,6 @@ const InteractiveBackground: React.FC = () => {
   // Generate random 3D shapes and Information Symbols
   const elements = Array.from({ length: 18 }).map((_, i) => ({
     id: i,
-    // Mix of 3D cubes and Text Symbols
     type: i % 2 === 0 ? 'cube' : 'symbol',
     symbol: ['{ }', '01', '⌘', '∑', '⚡', '◉', '//', '⨝'][Math.floor(Math.random() * 8)],
     left: `${Math.floor(Math.random() * 90) + 5}%`,
@@ -12,19 +11,32 @@ const InteractiveBackground: React.FC = () => {
     size: Math.floor(Math.random() * 40) + 30, // Size in px
     duration: Math.random() * 20 + 15,
     delay: Math.random() * -20,
-    color: ['#38bdf8', '#818cf8', '#c084fc', '#2dd4bf'][Math.floor(Math.random() * 4)], // Cyan, Indigo, Purple, Teal
+    // Colors: Strong, rich tones to pop against the pastel background
+    color: ['#4f46e5', '#db2777', '#0891b2', '#7c3aed'][Math.floor(Math.random() * 4)], // Indigo, Pink, Cyan, Violet
     depth: Math.random() * 200 - 100, // Z-axis variance
   }));
 
   return (
-    <div className="fixed inset-0 z-0 overflow-hidden bg-[#020617] perspective-[800px] pointer-events-none">
+    <div className="fixed inset-0 z-0 overflow-hidden perspective-[800px] pointer-events-none">
       
-      {/* 1. Cinematic Atmosphere */}
-      <div className="film-grain"></div>
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 blur-[120px] rounded-full animate-pulse" style={{animationDuration: '12s'}}></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-500/10 blur-[120px] rounded-full animate-pulse" style={{animationDuration: '15s'}}></div>
+      {/* 1. Animated Aura Gradient Background */}
+      <div 
+        className="absolute inset-0 bg-gradient-to-br from-indigo-100 via-purple-100 to-cyan-100 animate-aura"
+        style={{
+          backgroundSize: '400% 400%',
+          animation: 'auraShift 15s ease infinite'
+        }}
+      ></div>
 
-      {/* 2. Floating 3D Elements */}
+      {/* 2. Floating Orbs for extra depth */}
+      <div className="absolute top-[10%] left-[20%] w-[40vw] h-[40vw] bg-rose-300/20 blur-[100px] rounded-full mix-blend-multiply animate-pulse" style={{animationDuration: '8s'}}></div>
+      <div className="absolute bottom-[10%] right-[10%] w-[35vw] h-[35vw] bg-blue-300/20 blur-[100px] rounded-full mix-blend-multiply animate-pulse" style={{animationDuration: '10s'}}></div>
+      <div className="absolute top-[40%] left-[60%] w-[30vw] h-[30vw] bg-amber-200/20 blur-[80px] rounded-full mix-blend-multiply animate-pulse" style={{animationDuration: '12s'}}></div>
+
+      {/* 3. Texture Overlay */}
+      <div className="film-grain"></div>
+
+      {/* 4. Floating 3D Elements */}
       {elements.map((el) => {
         // Dynamic CSS variables for size and color
         const style = {
@@ -75,9 +87,10 @@ const InteractiveBackground: React.FC = () => {
           width: 100%;
           height: 100%;
           border: 1px solid var(--c);
-          background: rgba(255, 255, 255, 0.02);
-          box-shadow: 0 0 15px var(--c); /* Neon Glow */
-          opacity: 0.6;
+          /* Glassy look: Semi-transparent white with color tint */
+          background: rgba(255, 255, 255, 0.2);
+          box-shadow: 0 0 10px rgba(0,0,0,0.05);
+          opacity: 0.8;
           backface-visibility: visible;
         }
 
@@ -96,8 +109,9 @@ const InteractiveBackground: React.FC = () => {
           font-weight: bold;
           font-size: var(--s);
           color: var(--c);
-          text-shadow: 0 0 20px var(--c);
-          opacity: 0.8;
+          /* Crisp text in light mode */
+          text-shadow: 0 4px 10px rgba(255,255,255,0.5);
+          opacity: 0.9;
           animation: float-bob infinite ease-in-out alternate;
         }
 
@@ -109,8 +123,8 @@ const InteractiveBackground: React.FC = () => {
         }
 
         @keyframes float-bob {
-          0% { transform: translateY(0) scale(1); opacity: 0.4; }
-          100% { transform: translateY(-30px) scale(1.1); opacity: 0.9; }
+          0% { transform: translateY(0) scale(1); opacity: 0.6; }
+          100% { transform: translateY(-30px) scale(1.1); opacity: 1; }
         }
       `}</style>
     </div>
