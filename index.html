@@ -3,17 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Bytes — News Decoded</title>
-    <meta name="description" content="Hyper-polished news and insights for a calm, intelligent layer over the internet." />
+    <title>Bytes — Future Editorial</title>
+    <meta name="description" content="A next-gen news experience." />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap');
       
       :root {
-        --bytes-primary: linear-gradient(135deg, #FFFFFF 0%, #E9F4FF 45%, #F7E7C3 100%);
-        --ink: #232323;
-        --accent-gold: #D9B77E;
-        --card-border: #F0E0D2;
+        /* Theme: Void & Prism */
+        --bg-void: #020617; /* Slate 950/Black mix */
+        --card-surface: #ffffff;
+        --text-main: #020617;
+        --text-sub: #475569;
+        
+        /* Accents */
+        --accent-glow: 0 0 20px rgba(56, 189, 248, 0.5);
+        
+        /* Advanced Shadows */
+        --shadow-elevation: 
+          0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+          0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        --shadow-glow: 0 0 40px -10px rgba(255, 255, 255, 0.3);
       }
 
       html, body, #root {
@@ -21,63 +31,116 @@
         margin: 0;
         padding: 0;
         overflow: hidden;
-        font-family: 'Inter', sans-serif;
-        color: var(--ink);
-        background-color: #000;
+        font-family: 'Manrope', sans-serif;
+        color: var(--text-main);
+        background-color: var(--bg-void);
       }
 
-      .font-display {
-        font-family: 'Fraunces', serif;
-        line-height: 1.3;
-        letter-spacing: -0.01em;
+      h1, h2, h3, h4, .font-display {
+        font-family: 'Space Grotesk', sans-serif;
       }
 
+      /* Feed scroll behavior */
       .feed-container {
         height: 100vh;
         overflow-y: scroll;
         scroll-snap-type: y mandatory;
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
+        padding-top: 40px; 
+        padding-bottom: 110px; 
       }
       .feed-container::-webkit-scrollbar { display: none; }
 
       .snap-slide {
-        height: 100vh;
-        scroll-snap-align: start;
+        height: 85vh; 
+        min-height: 620px;
+        scroll-snap-align: center;
         scroll-snap-stop: always;
         position: relative;
-        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-      @keyframes slide-up {
-        from { transform: translate(-50%, 100%); opacity: 0; }
-        to { transform: translate(-50%, 0); opacity: 1; }
+      /* --- Advanced Design System --- */
+
+      /* Film Grain Overlay */
+      .film-grain {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+        opacity: 0.04;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
       }
 
-      .animate-slide-up {
-        animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      /* The Prism Card */
+      .prism-card {
+        background: var(--card-surface);
+        border-radius: 32px;
+        /* Double border trick using shadow */
+        box-shadow: 
+          0 0 0 1px rgba(255,255,255,0.1), /* Inner highlight */
+          0 25px 50px -12px rgba(0, 0, 0, 0.5); /* Deep shadow */
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      /* Subtle iridescent border effect on hover */
+      .prism-card::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 32px;
+        padding: 1px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0));
+        -webkit-mask: 
+           linear-gradient(#fff 0 0) content-box, 
+           linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
       }
 
-      @keyframes fade-in {
-        from { opacity: 0; }
-        to { opacity: 1; }
+      /* Navbar - Floating Glass */
+      .glass-dock {
+        background: rgba(15, 23, 42, 0.6); /* Dark glass */
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 
+          0 10px 30px -5px rgba(0, 0, 0, 0.5),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
       }
 
-      .animate-fade-in {
-        animation: fade-in 0.8s ease-out forwards;
+      /* Buttons */
+      .btn-icon {
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .btn-icon:active {
+        transform: scale(0.9);
       }
 
+      .animate-enter {
+        animation: slide-up-fade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      @keyframes slide-up-fade {
+        from { opacity: 0; transform: translateY(40px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Selection */
       ::selection {
-        background-color: var(--accent-gold);
-        color: var(--ink);
-      }
-
-      /* Premium button effect */
-      .active\:scale-95:active {
-        transform: scale(0.95);
+        background-color: #38bdf8; /* Sky 400 */
+        color: #000;
       }
     </style>
   <script type="importmap">

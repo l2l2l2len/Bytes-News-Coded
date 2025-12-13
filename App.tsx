@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import NewsSlide from './components/NewsSlide';
 import CurateDrawer from './components/CurateDrawer';
 import Onboarding from './components/Onboarding';
+import InteractiveBackground from './components/InteractiveBackground';
 import { PAPERS } from './constants';
 import { Byte, UserPreferences } from './types';
 
@@ -65,57 +66,71 @@ const App: React.FC = () => {
     });
   }, [news, selectedTopics, searchTerm]);
 
-  if (showOnboarding) {
-    return <Onboarding onComplete={handleOnboardingComplete} />;
-  }
-
   return (
-    <div className="relative h-screen bg-black overflow-hidden flex flex-col items-center">
-      <Navbar 
-        onProfileClick={() => setIsDrawerOpen(true)}
-        onSearchClick={() => setIsDrawerOpen(true)}
-        onNotifyClick={() => alert('No new notifications')}
-      />
-
-      <div 
-        ref={feedRef}
-        className="feed-container w-full max-w-full sm:max-w-[480px] bg-black shadow-2xl"
-      >
-        {filteredNews.length > 0 ? (
-          filteredNews.map(byte => (
-            <NewsSlide 
-              key={byte.id} 
-              byte={byte} 
-              onLike={handleLike} 
-              onSave={handleSave} 
+    <div className="relative h-screen overflow-hidden flex flex-col items-center">
+      {/* Dynamic Background */}
+      <InteractiveBackground />
+      
+      {showOnboarding ? (
+        <Onboarding onComplete={handleOnboardingComplete} />
+      ) : (
+        <>
+          {/* Main Content Area - Scales down when drawer is open */}
+          <div 
+            className={`
+              relative z-10 w-full h-full flex flex-col items-center transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
+              ${isDrawerOpen ? 'scale-95 opacity-50 blur-[2px] translate-x-[-20px] pointer-events-none' : 'scale-100 opacity-100 translate-x-0'}
+            `}
+            style={{ transformOrigin: 'center center' }}
+          >
+            <Navbar 
+                onProfileClick={() => setIsDrawerOpen(true)}
+                onSearchClick={() => setIsDrawerOpen(true)}
+                onNotifyClick={() => alert('No new notifications')}
             />
-          ))
-        ) : (
-          <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-[#111]">
-            <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
-              <svg className="w-10 h-10 text-white/20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-            </div>
-            <h3 className="text-2xl font-display font-black text-white mb-3 tracking-tight">Feed is empty</h3>
-            <p className="text-sm text-white/40 mb-10 leading-relaxed font-medium">Try expanding your curation or refining your search terms.</p>
-            <button 
-              onClick={() => setIsDrawerOpen(true)}
-              className="px-10 py-5 rounded-full bg-white text-black font-black text-[11px] uppercase tracking-[0.2em] hover:bg-[#D9B77E] transition-all active:scale-95"
-            >
-              Adjust Curation
-            </button>
-          </div>
-        )}
-      </div>
 
-      <CurateDrawer 
-        isOpen={isDrawerOpen} 
-        onClose={() => setIsDrawerOpen(false)}
-        selectedTopics={selectedTopics}
-        onTopicToggle={toggleTopic}
-        onSearch={setSearchTerm}
-      />
+            <div 
+                ref={feedRef}
+                className="feed-container w-full h-full pt-20"
+            >
+                {filteredNews.length > 0 ? (
+                filteredNews.map(byte => (
+                    <NewsSlide 
+                    key={byte.id} 
+                    byte={byte} 
+                    onLike={handleLike} 
+                    onSave={handleSave} 
+                    />
+                ))
+                ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center p-8">
+                    <div className="w-20 h-20 rounded-full bg-white/50 flex items-center justify-center mb-6 shadow-sm">
+                      <svg className="w-10 h-10 text-[#FF7043]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                    </div>
+                    <h3 className="text-2xl font-display font-bold text-[#3E2723] mb-2">It's quiet here.</h3>
+                    <p className="text-sm text-[#795548] mb-8 leading-relaxed max-w-xs mx-auto">Try expanding your curation settings to see more stories.</p>
+                    <button 
+                    onClick={() => setIsDrawerOpen(true)}
+                    className="px-8 py-4 rounded-full bg-[#3E2723] text-white font-bold text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-lg"
+                    >
+                    Adjust Curation
+                    </button>
+                </div>
+                )}
+            </div>
+          </div>
+
+          <CurateDrawer 
+            isOpen={isDrawerOpen} 
+            onClose={() => setIsDrawerOpen(false)}
+            selectedTopics={selectedTopics}
+            onTopicToggle={toggleTopic}
+            onSearch={setSearchTerm}
+          />
+        </>
+      )}
     </div>
   );
 };

@@ -19,7 +19,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     }
   });
 
-  const topicsList = ['AI & Tech', 'Startups', 'Global Markets', 'Policy & Regulation', 'Geopolitics', 'Climate', 'Culture', 'Science', 'Finance', 'Health'];
+  const topicsList = ['AI & Tech', 'Startups', 'Global Markets', 'Policy', 'Geopolitics', 'Climate', 'Culture', 'Science', 'Finance', 'Health'];
 
   const toggleTopic = (topic: string) => {
     setPrefs(p => ({
@@ -31,129 +31,105 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const next = () => setStep(s => s + 1);
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-8 text-center animate-fade-in-up bg-[#FFFFFF]/30 backdrop-blur-sm">
-      <div className="max-app-width w-full h-full flex flex-col justify-center">
+    // Changed bg-[#020617] to bg-black/60 backdrop-blur-sm to reveal the 3D shapes
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-6 bg-black/60 backdrop-blur-[2px] animate-enter">
+      
+      {/* Main Card */}
+      <div className="relative z-10 w-full max-w-[480px] p-10 rounded-[32px] bg-[#020617]/80 backdrop-blur-xl border border-white/10 shadow-2xl flex flex-col items-center text-center">
         
-        {/* Step 1: Welcome */}
+        {/* Step 1: Intro */}
         {step === 1 && (
-          <div className="space-y-12 animate-fade-in-up">
-            <div className="space-y-4">
-              <div className="w-16 h-16 bg-[#232323] rounded-2xl mx-auto flex items-center justify-center text-white font-display text-4xl shadow-xl rotate-3">B</div>
-              <h1 className="text-4xl font-display font-bold">Bytes</h1>
-              <p className="text-xl text-[#232323]/60 font-medium">News, decoded into fast, clear bytes.</p>
+        <div className="flex flex-col items-center space-y-8 animate-enter w-full">
+            <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-2xl flex items-center justify-center text-4xl font-bold text-white shadow-lg shadow-cyan-500/20 mb-2">
+               B
             </div>
-            <button onClick={next} className="w-full py-5 bg-[#232323] text-white font-bold rounded-3xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg">
-              Get started
+            
+            <div className="space-y-4">
+            <h1 className="font-display text-4xl font-bold text-white tracking-tight">System Online.</h1>
+            <p className="text-slate-400 text-lg font-medium leading-relaxed">
+                Calibrating your <span className="text-white">neural feed</span> for <br/> maximum signal-to-noise ratio.
+            </p>
+            </div>
+            
+            <button 
+            onClick={next} 
+            className="w-full py-4 mt-4 bg-white text-black font-bold text-sm uppercase tracking-widest hover:bg-cyan-50 transition-all rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+            >
+            Initialize
             </button>
-          </div>
+        </div>
         )}
 
         {/* Step 2: Topics */}
         {step === 2 && (
-          <div className="space-y-8 animate-fade-in-up">
-            <div className="space-y-2">
-              <h2 className="text-3xl font-display font-bold">What do you care about?</h2>
-              <p className="text-sm text-[#232323]/50">Select 3–7 topics to tailor your feed.</p>
-            </div>
-            <div className="flex flex-wrap justify-center gap-2">
-              {topicsList.map(t => (
+        <div className="w-full animate-enter">
+            <h2 className="font-display text-3xl font-bold text-white mb-2">Vectors</h2>
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-8">Select Data Streams</p>
+            
+            <div className="flex flex-wrap gap-3 justify-center mb-10">
+            {topicsList.map(t => (
                 <button 
-                  key={t}
-                  onClick={() => toggleTopic(t)}
-                  className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest border transition-all pill-chip ${
-                    prefs.topics.includes(t) ? 'bg-[#232323] text-white border-[#232323]' : 'bg-white/50 text-[#232323]/60 border-[#F0E0D2]'
-                  }`}
+                key={t}
+                onClick={() => toggleTopic(t)}
+                className={`
+                    px-4 py-3 rounded-lg text-sm font-bold transition-all border
+                    ${prefs.topics.includes(t) 
+                    ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.2)]' 
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30 hover:text-white'}
+                `}
                 >
-                  {t}
+                {t}
                 </button>
-              ))}
+            ))}
             </div>
-            <div className="h-1 bg-[#232323]/5 w-full rounded-full overflow-hidden">
-              <div className="h-full bg-[#D9B77E] transition-all duration-500" style={{ width: `${(prefs.topics.length / 7) * 100}%` }} />
-            </div>
+
             <button 
-              disabled={prefs.topics.length < 3} 
-              onClick={next} 
-              className="w-full py-5 bg-[#232323] text-white font-bold rounded-3xl disabled:opacity-20 shadow-lg"
+            disabled={prefs.topics.length < 3} 
+            onClick={next} 
+            className="w-full py-4 bg-white text-black font-bold text-sm uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cyan-50 transition-all rounded-xl"
             >
-              Continue
+            Confirm
             </button>
-          </div>
+        </div>
         )}
 
-        {/* Step 3: Style */}
+        {/* Step 3: Density */}
         {step === 3 && (
-          <div className="space-y-8 animate-fade-in-up">
-            <h2 className="text-3xl font-display font-bold">Reading Style?</h2>
-            <div className="space-y-3">
-              {['Ultra quick (10–20s reads)', 'Brief summaries', 'Occasional deep dives'].map(style => (
+        <div className="w-full animate-enter">
+            <h2 className="font-display text-3xl font-bold text-white mb-2">Resolution</h2>
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-8">Information Density</p>
+            
+            <div className="space-y-4 mb-10">
+            {['Ultra quick (10s)', 'Brief summaries', 'Deep dives'].map(style => (
                 <button 
-                  key={style}
-                  onClick={() => { setPrefs(p => ({...p, readingStyle: style.split(' (')[0] as any})); next(); }}
-                  className="w-full p-6 soft-card rounded-2xl flex justify-between items-center group transition-all"
+                key={style}
+                onClick={() => { setPrefs(p => ({...p, readingStyle: style.split(' (')[0] as any})); next(); }}
+                className={`
+                    w-full p-5 flex justify-between items-center text-left transition-all border rounded-xl
+                    ${prefs.readingStyle === style.split(' (')[0] 
+                    ? 'bg-indigo-500/20 border-indigo-400 text-indigo-300' 
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/30 hover:bg-white/10'}
+                `}
                 >
-                  <span className="font-bold text-sm">{style}</span>
-                  <div className={`w-5 h-5 rounded-full border-2 ${prefs.readingStyle === style.split(' (')[0] ? 'bg-[#D9B77E] border-[#D9B77E]' : 'border-[#F0E0D2]'}`} />
+                <span className="font-bold text-base">{style}</span>
+                {prefs.readingStyle === style.split(' (')[0] && <div className="w-2 h-2 bg-indigo-400 rounded-full shadow-[0_0_10px_rgba(129,140,248,0.8)]" />}
                 </button>
-              ))}
+            ))}
             </div>
-            <p className="text-xs text-[#232323]/40 italic">This affects the length and density of your cards.</p>
-          </div>
+        </div>
         )}
 
-        {/* Step 4: Tone */}
+        {/* Step 4: Loading */}
         {step === 4 && (
-          <div className="space-y-8 animate-fade-in-up">
-            <h2 className="text-3xl font-display font-bold">Choose your tone.</h2>
-            <div className="space-y-3">
-              {['Straight facts', 'More explanation', 'Context & opinion'].map(tone => (
-                <button 
-                  key={tone}
-                  onClick={() => { setPrefs(p => ({...p, tone: tone as any})); next(); }}
-                  className="w-full p-6 soft-card rounded-2xl flex justify-between items-center transition-all"
-                >
-                  <span className="font-bold text-sm">{tone}</span>
-                  <div className={`w-5 h-5 rounded-full border-2 ${prefs.tone === tone ? 'bg-[#D9B77E] border-[#D9B77E]' : 'border-[#F0E0D2]'}`} />
-                </button>
-              ))}
+        <div className="flex flex-col items-center justify-center py-10 animate-enter">
+            <div className="relative w-20 h-20 mb-8">
+                <div className="absolute inset-0 border-4 border-white/10 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
             </div>
-          </div>
-        )}
-
-        {/* Step 5: Trust/Constraints */}
-        {step === 5 && (
-          <div className="space-y-8 animate-fade-in-up">
-            <h2 className="text-3xl font-display font-bold">Trust & Constraints</h2>
-            <div className="space-y-3">
-              {[
-                { key: 'noClickbait', label: 'No clickbait' },
-                { key: 'fewerCelebrity', label: 'Fewer celebrity stories' },
-                { key: 'expertSources', label: 'More expert sources' },
-                { key: 'safeMode', label: 'Safe mode (No sensitive content)' }
-              ].map(item => (
-                <div key={item.key} className="p-5 soft-card rounded-2xl flex justify-between items-center">
-                  <span className="font-bold text-sm">{item.label}</span>
-                  <button 
-                    onClick={() => setPrefs(p => ({...p, constraints: {...p.constraints, [item.key]: !(p.constraints as any)[item.key]}}))}
-                    className={`w-12 h-6 rounded-full relative transition-colors ${ (prefs.constraints as any)[item.key] ? 'bg-[#D9B77E]' : 'bg-[#232323]/10'}`}
-                  >
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${ (prefs.constraints as any)[item.key] ? 'left-7' : 'left-1'}`} />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <button onClick={next} className="w-full py-5 bg-[#232323] text-white font-bold rounded-3xl shadow-lg">Finalize setup</button>
-          </div>
-        )}
-
-        {/* Step 6: Loading */}
-        {step === 6 && (
-          <div className="space-y-8 animate-fade-in-up flex flex-col items-center">
-            <div className="w-12 h-12 border-4 border-[#D9B77E] border-t-transparent rounded-full animate-spin" />
-            <h2 className="text-2xl font-display font-bold">Building your feed...</h2>
-            <p className="text-sm text-[#232323]/50">Curating the intelligent layer.</p>
+            <h2 className="font-display text-xl font-bold text-white">Synthesizing</h2>
+            <p className="text-xs font-mono text-cyan-400 mt-2 tracking-widest animate-pulse">BUILDING_FEED_PROTOCOL...</p>
             {setTimeout(() => onComplete(prefs), 2000) && null}
-          </div>
+        </div>
         )}
 
       </div>
