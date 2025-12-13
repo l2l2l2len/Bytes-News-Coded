@@ -1,0 +1,1 @@
+// Superceded by vertical snap-scrolling in App.tsx
