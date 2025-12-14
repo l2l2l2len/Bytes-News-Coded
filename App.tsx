@@ -20,6 +20,7 @@ const App: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   
   const feedRef = useRef<HTMLDivElement>(null);
+  const initialized = useRef(false); // Ref to prevent double-execution
 
   // Define Batches: We only load one at a time to save API quota
   const BATCHES = useMemo(() => [
@@ -67,6 +68,10 @@ const App: React.FC = () => {
 
   // Initial Load
   useEffect(() => {
+    // Prevent double firing in Strict Mode
+    if (initialized.current) return;
+    initialized.current = true;
+
     // 1. Load preferences
     const hasSeenOnboarding = localStorage.getItem('bytes_onboarded') === 'true';
     if (hasSeenOnboarding) setShowOnboarding(false);

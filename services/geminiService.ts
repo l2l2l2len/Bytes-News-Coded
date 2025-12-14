@@ -69,7 +69,6 @@ export const sendMessageToGemini = async (history: {role: string, text: string}[
 
 /**
  * Fetches real-time news using Google Search Grounding.
- * Note: schema extraction is manual because googleSearch tool doesn't support responseSchema in the same request effectively for this specific payload structure in 2.5 flash.
  */
 export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
   if (!process.env.API_KEY) {
@@ -79,10 +78,9 @@ export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
 
   const topicString = topics.length > 0 ? topics.join(', ') : 'Global Breaking News';
   
-  // Prompt optimized for maximum quantity (High Token Density)
-  // We ask for 2000, but realistically the model will output as many as it can within token limits (approx 50-100 per call).
+  // OPTIMIZATION: Requesting fewer items (6-8) to drastically reduce Token usage per request.
   const prompt = `
-    Find as many real-time breaking news stories as possible (target 2000) regarding: ${topicString}.
+    Find 6-8 high-impact breaking news stories about: ${topicString}.
     
     CRITICAL: List strictly valid JSON objects. No markdown.
     Fields:
@@ -92,19 +90,34 @@ export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
     - "category": Topic (e.g. World, Tech).
     - "sourceUrl": Link.
     
-    Output strictly a JSON array. If you run out of tokens, close the array validly.
+    Output strictly a JSON array.
   `;
 
+  // Internal function to handle retries
+  const generate = async (retryCount = 0): Promise<any> => {
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      return await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          tools: [{ googleSearch: {} }],
+        },
+      });
+    } catch (error: any) {
+      // Retry up to 2 times on 429 (Resource Exhausted) errors
+      if ((error.status === 429 || error.message?.includes('429') || error.message?.includes('RESOURCE_EXHAUSTED')) && retryCount < 2) {
+         const delay = (retryCount + 1) * 2000;
+         console.warn(`Rate limit hit. Retrying in ${delay}ms...`);
+         await new Promise(resolve => setTimeout(resolve, delay));
+         return generate(retryCount + 1);
+      }
+      throw error;
+    }
+  };
+
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        tools: [{ googleSearch: {} }],
-        // We do not set maxOutputTokens here to let the model use its default maximum (usually 8k for Flash).
-      },
-    });
+    const response = await generate();
 
     let text = response.text || "";
     // Clean markdown if present
@@ -126,7 +139,7 @@ export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
     return rawData.map((item: any, index: number) => {
       const cat = item.category || "World";
       return {
-        id: `live-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Unique ID for aggressive merging
+        id: `live-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         title: item.title || "Breaking News",
         publisher: item.publisher || "Global Wire",
         authors: ["AI Curator"],
@@ -143,8 +156,12 @@ export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
       } as Byte;
     });
 
-  } catch (e) {
-    console.error("Failed to fetch live news for topics:", topics, e);
+  } catch (e: any) {
+    if (e.message?.includes('429') || e.status === 429) {
+      console.warn("API Quota Exceeded. Skipping update.");
+      return []; // Fail gracefully
+    }
+    console.error("Failed to fetch live news:", e);
     return [];
   }
 };
