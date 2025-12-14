@@ -14,61 +14,69 @@ const App: React.FC = () => {
   const [selectedTopics, setSelectedTopics] = useState<string[]>(['US News', 'World', 'AI & Tech', 'Business', 'Science', 'Finance', 'Culture']);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Loading States
-  const [isLiveLoading, setIsLiveLoading] = useState(false);
-  const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
+  // Streaming State
+  const [streamStatus, setStreamStatus] = useState<string>(''); 
+  const [isStreaming, setIsStreaming] = useState(false);
   
   const feedRef = useRef<HTMLDivElement>(null);
-  const initialized = useRef(false); // Ref to prevent double-execution
+  const initialized = useRef(false);
 
-  // Define Batches: We only load one at a time to save API quota
+  // Define Batches for the "Massive Fetch" pipeline
+  // Broken down to prevent API overload, but run automatically
   const BATCHES = useMemo(() => [
-    ['Breaking News Global', 'World Politics'],      // Batch 0 (Initial)
-    ['Technology Trends', 'Artificial Intelligence'], // Batch 1
-    ['Financial Markets', 'Crypto & Web3'],          // Batch 2
-    ['Science Breakthroughs', 'Health & Medicine'],  // Batch 3
-    ['Entertainment', 'Internet Culture', 'Sports']   // Batch 4
+    ['Breaking News Global', 'World Politics'],
+    ['Technology Trends', 'Artificial Intelligence'],
+    ['Financial Markets', 'Crypto & Web3'],
+    ['Science Breakthroughs', 'Health & Medicine'],
+    ['Entertainment', 'Internet Culture', 'Sports']
   ], []);
 
   /**
-   * Load a specific batch of news
+   * Massive Sequential Fetch
+   * Loads all batches one by one with a delay to respect API quotas (The "Correct Way")
    */
-  const loadBatch = useCallback(async (batchIdx: number) => {
-    if (!process.env.API_KEY) return;
-    if (batchIdx >= BATCHES.length) {
-      setHasMore(false);
-      return;
-    }
+  const startNewsStream = useCallback(async () => {
+    if (!process.env.API_KEY || isStreaming) return;
+    
+    setIsStreaming(true);
+    setStreamStatus('Initializing global feed...');
 
-    setIsLiveLoading(true);
+    // 1. Reset or Prep
+    // Note: We don't clear PAPERS (static data) immediately so the user has something to read.
 
-    try {
-      const topics = BATCHES[batchIdx];
-      const newBytes = await fetchRealTimeNews(topics);
+    for (let i = 0; i < BATCHES.length; i++) {
+        const batchTopics = BATCHES[i];
+        setStreamStatus(`Syncing: ${batchTopics.join(' & ')}...`);
+        
+        try {
+            // Fetch
+            const newBytes = await fetchRealTimeNews(batchTopics);
+            
+            // Append immediately
+            setNews(prev => {
+                const existingIds = new Set(prev.map(p => p.id));
+                const uniqueNew = newBytes.filter(b => !existingIds.has(b.id));
+                return [...prev, ...uniqueNew];
+            });
 
-      if (newBytes.length > 0) {
-        setNews(prev => {
-          const existingIds = new Set(prev.map(p => p.id));
-          const uniqueNew = newBytes.filter(b => !existingIds.has(b.id));
-          return [...prev, ...uniqueNew];
-        });
-      } else {
-        // If a batch returns empty (or fails), allow trying next batch later
-        if (batchIdx >= BATCHES.length - 1) {
-             setHasMore(false);
+            // Delay for Rate Limiting (Throttle)
+            // 2000ms delay + execution time usually keeps us under 15 RPM
+            if (i < BATCHES.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+
+        } catch (error) {
+            console.error(`Batch ${i} failed`, error);
+            // Continue to next batch even if one fails
         }
-      }
-    } catch (error) {
-      console.error("Batch load failed", error);
-    } finally {
-      setIsLiveLoading(false);
     }
+
+    setStreamStatus('');
+    setIsStreaming(false);
   }, [BATCHES]);
 
-  // Initial Load
+  // Initial Load Effect
   useEffect(() => {
-    // Prevent double firing in Strict Mode
     if (initialized.current) return;
     initialized.current = true;
 
@@ -85,32 +93,18 @@ const App: React.FC = () => {
     // 2. Initialize with Static Data (Instant Paint)
     setNews(PAPERS.map(p => ({ ...p, isLiked: false, isSaved: false })));
 
-    // 3. Fetch ONLY the first batch automatically
-    const timer = setTimeout(() => {
-      loadBatch(0);
-    }, 1500); // Slight delay to ensure UI is ready
-
-    return () => clearTimeout(timer);
-  }, [loadBatch]);
+    // 3. Start the Stream automatically if onboarded
+    if (hasSeenOnboarding) {
+        setTimeout(startNewsStream, 1000);
+    }
+  }, [startNewsStream]);
 
   // Handlers
-  const handleLoadMore = () => {
-    const nextIdx = currentBatchIndex + 1;
-    if (nextIdx < BATCHES.length) {
-      setCurrentBatchIndex(nextIdx);
-      loadBatch(nextIdx);
-    } else {
-      setHasMore(false);
-    }
-  };
-
   const handleRefresh = () => {
-    // Reset to initial state
+    // Clear and restart
     setNews(PAPERS.map(p => ({ ...p, isLiked: false, isSaved: false })));
-    setCurrentBatchIndex(0);
-    setHasMore(true);
-    loadBatch(0);
     feedRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    startNewsStream();
   };
 
   const handleOnboardingComplete = (prefs: UserPreferences) => {
@@ -118,7 +112,8 @@ const App: React.FC = () => {
     setSelectedTopics(prefs.topics);
     localStorage.setItem('bytes_onboarded', 'true');
     localStorage.setItem('bytes_prefs', JSON.stringify(prefs));
-    loadBatch(0);
+    // Start stream after onboarding
+    startNewsStream();
   };
 
   const handleLike = (id: string) => {
@@ -141,7 +136,7 @@ const App: React.FC = () => {
 
   const filteredNews = useMemo(() => {
     return news.filter(byte => {
-      if (byte.id.startsWith('live-')) return true; // Always show live news
+      if (byte.id.startsWith('live-') || byte.id.startsWith('fallback-')) return true; 
       const matchesTopic = selectedTopics.includes(byte.category) || selectedTopics.length === 0;
       const matchesSearch = searchTerm === '' || 
         byte.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -169,7 +164,7 @@ const App: React.FC = () => {
                 onSearchClick={() => setIsDrawerOpen(true)}
                 onNotifyClick={() => {}}
                 onLiveClick={handleRefresh}
-                isLiveLoading={isLiveLoading}
+                isLiveLoading={isStreaming}
             />
 
             <div 
@@ -186,37 +181,6 @@ const App: React.FC = () => {
                           onSave={handleSave} 
                         />
                     ))}
-
-                    {/* LOAD MORE BUTTON */}
-                    {hasMore ? (
-                        <div className="flex justify-center py-8">
-                            <button 
-                                onClick={handleLoadMore}
-                                disabled={isLiveLoading}
-                                className="group relative overflow-hidden rounded-full bg-white px-8 py-3 shadow-md transition-all hover:scale-105 hover:shadow-lg disabled:opacity-70"
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-r from-gray-50 to-gray-100 opacity-0 transition-opacity group-hover:opacity-100" />
-                                <div className="relative flex items-center gap-3">
-                                    {isLiveLoading ? (
-                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-black" />
-                                    ) : (
-                                        <svg className="h-4 w-4 text-gray-400 transition-colors group-hover:text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 13l-7 7-7-7m14-8l-7 7-7-7" />
-                                        </svg>
-                                    )}
-                                    <span className="text-xs font-bold uppercase tracking-widest text-gray-900">
-                                        {isLiveLoading ? 'Curating...' : 'Load More News'}
-                                    </span>
-                                </div>
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="flex justify-center py-12 opacity-50">
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
-                                You're all caught up
-                            </span>
-                        </div>
-                    )}
                   </>
                 ) : (
                     <div className="h-full w-full flex flex-col items-center justify-center text-center p-8">
@@ -229,6 +193,27 @@ const App: React.FC = () => {
                         </button>
                     </div>
                 )}
+
+                {/* Live Stream Status Indicator */}
+                <div className="h-24 flex flex-col items-center justify-center gap-3 transition-opacity duration-500">
+                    {isStreaming ? (
+                        <>
+                             <div className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">{streamStatus}</span>
+                            </div>
+                            {/* Animated bar */}
+                            <div className="w-32 h-0.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div className="h-full bg-red-500 animate-progress-indeterminate"></div>
+                            </div>
+                        </>
+                    ) : (
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-300">
+                             Feed Up to Date
+                        </span>
+                    )}
+                </div>
+
             </div>
           </div>
 
@@ -241,6 +226,17 @@ const App: React.FC = () => {
           />
         </>
       )}
+      
+      <style>{`
+        @keyframes progress-indeterminate {
+            0% { width: 0%; margin-left: 0%; }
+            50% { width: 50%; margin-left: 25%; }
+            100% { width: 0%; margin-left: 100%; }
+        }
+        .animate-progress-indeterminate {
+            animation: progress-indeterminate 1.5s infinite ease-in-out;
+        }
+      `}</style>
     </div>
   );
 };
