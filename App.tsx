@@ -146,7 +146,7 @@ const App: React.FC = () => {
   }, [news, selectedTopics, searchTerm]);
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-gray-100">
+    <div className="relative h-screen w-screen overflow-hidden bg-black">
       
       {showOnboarding ? (
         <Onboarding onComplete={handleOnboardingComplete} />
@@ -154,7 +154,7 @@ const App: React.FC = () => {
         <>
           <div 
             className={`
-              relative z-10 w-full h-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] bg-gray-100
+              relative z-10 w-full h-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] bg-black
               ${isDrawerOpen ? 'scale-90 opacity-80 blur-[1px]' : 'scale-100 opacity-100'}
             `}
             style={{ transformOrigin: 'center bottom' }}
@@ -167,9 +167,10 @@ const App: React.FC = () => {
                 isLiveLoading={isStreaming}
             />
 
+            {/* SNAP SCROLL CONTAINER - FULL SCREEN, NO PADDING */}
             <div 
                 ref={feedRef}
-                className="feed-container px-4 md:px-0 max-w-2xl mx-auto pt-24 pb-12"
+                className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar"
             >
                 {filteredNews.length > 0 ? (
                   <>
@@ -183,32 +184,32 @@ const App: React.FC = () => {
                     ))}
                   </>
                 ) : (
-                    <div className="h-full w-full flex flex-col items-center justify-center text-center p-8">
-                        <h3 className="text-3xl font-serif-display font-bold text-black mb-2">No stories found.</h3>
+                    <div className="h-full w-full flex flex-col items-center justify-center text-center p-8 snap-center bg-gray-900">
+                        <h3 className="text-3xl font-serif-display font-bold text-white mb-2">No stories found.</h3>
                         <button 
                           onClick={() => setIsDrawerOpen(true)}
-                          className="mt-8 px-8 py-4 rounded-full bg-black text-white font-bold text-xs uppercase tracking-widest shadow-lg"
+                          className="mt-8 px-8 py-4 rounded-full bg-white text-black font-bold text-xs uppercase tracking-widest shadow-lg hover:scale-105 transition-transform"
                         >
                           Adjust Filters
                         </button>
                     </div>
                 )}
 
-                {/* Live Stream Status Indicator */}
-                <div className="h-24 flex flex-col items-center justify-center gap-3 transition-opacity duration-500">
+                {/* Live Stream Status Indicator - Snaps as the last item */}
+                <div className="h-[30vh] w-full flex flex-col items-center justify-center gap-3 transition-opacity duration-500 snap-center bg-black text-white">
                     {isStreaming ? (
                         <>
                              <div className="flex items-center gap-1.5">
                                 <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
-                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">{streamStatus}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">{streamStatus}</span>
                             </div>
                             {/* Animated bar */}
-                            <div className="w-32 h-0.5 bg-gray-200 rounded-full overflow-hidden">
-                                <div className="h-full bg-red-500 animate-progress-indeterminate"></div>
+                            <div className="w-32 h-0.5 bg-gray-800 rounded-full overflow-hidden">
+                                <div className="h-full bg-red-600 animate-progress-indeterminate"></div>
                             </div>
                         </>
                     ) : (
-                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-300">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
                              Feed Up to Date
                         </span>
                     )}

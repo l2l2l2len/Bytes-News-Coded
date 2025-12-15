@@ -18,30 +18,24 @@
 
       html, body, #root {
         height: 100%;
+        width: 100%;
         margin: 0;
         padding: 0;
-        overflow: hidden;
+        overflow: hidden; /* Main container handles scroll */
         font-family: var(--font-sans);
         background-color: #f3f4f6; /* Gray-100 */
         color: var(--color-black);
         -webkit-font-smoothing: antialiased;
+        -webkit-tap-highlight-color: transparent;
       }
 
       /* Typography Utilities */
       .font-serif-display { font-family: var(--font-serif); }
       .font-sans-body { font-family: var(--font-sans); }
 
-      /* Feed Container (Standard Scroll) */
-      .feed-container {
-        height: 100vh;
-        width: 100vw;
-        overflow-y: scroll;
-        -webkit-overflow-scrolling: touch;
-      }
-      
-      /* Hide scrollbar for clean look */
-      .feed-container::-webkit-scrollbar { display: none; }
-      .feed-container { -ms-overflow-style: none; scrollbar-width: none; }
+      /* Hide all scrollbars */
+      *::-webkit-scrollbar { display: none; }
+      * { -ms-overflow-style: none; scrollbar-width: none; }
 
       /* Utilities */
       .no-scrollbar::-webkit-scrollbar { display: none; }
