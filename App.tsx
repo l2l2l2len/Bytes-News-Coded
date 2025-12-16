@@ -124,19 +124,13 @@ const App: React.FC = () => {
   }, [news, selectedTopics, searchTerm]);
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-[#F2F1EC]">
+    <div className="relative h-screen w-screen overflow-hidden bg-black">
       
       {showOnboarding ? (
         <Onboarding onComplete={handleOnboardingComplete} />
       ) : (
         <>
-          <div 
-            className={`
-              relative z-10 w-full h-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] bg-[#F2F1EC]
-              ${isDrawerOpen ? 'scale-95 opacity-80 blur-[2px]' : 'scale-100 opacity-100'}
-            `}
-            style={{ transformOrigin: 'center center' }}
-          >
+          <div className="relative z-10 w-full h-full bg-black">
             <Navbar 
                 onProfileClick={() => setIsDrawerOpen(true)}
                 onSearchClick={() => setIsDrawerOpen(true)}
@@ -145,11 +139,10 @@ const App: React.FC = () => {
                 isLiveLoading={isStreaming}
             />
 
-            {/* FEED CONTAINER */}
-            {/* Added pt-24 to push content below navbar, ensuring floating feel */}
+            {/* FEED CONTAINER - Full Height, Snap Scrolling */}
             <div 
                 ref={feedRef}
-                className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar pt-20 md:pt-24"
+                className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar"
             >
                 {filteredNews.length > 0 ? (
                   <>
@@ -163,7 +156,7 @@ const App: React.FC = () => {
                     ))}
                   </>
                 ) : (
-                    <div className="h-[70vh] w-full flex flex-col items-center justify-center text-center p-8 snap-center">
+                    <div className="h-screen w-full flex flex-col items-center justify-center text-center p-8 snap-center bg-[#F2F1EC]">
                         <h3 className="text-3xl font-serif-display font-bold text-[#1C1C1E] mb-3">Quiet today.</h3>
                         <p className="text-[#8E8E93] text-sm mb-8">Try adjusting your interests.</p>
                         <button 
@@ -176,20 +169,20 @@ const App: React.FC = () => {
                 )}
 
                 {/* Status Indicator */}
-                <div className="h-[30vh] w-full flex flex-col items-center justify-start pt-12 gap-3 transition-opacity duration-500 snap-center pb-20">
+                <div className="h-[20vh] w-full flex flex-col items-center justify-center gap-3 snap-center bg-black text-white/50 pb-20">
                     {isStreaming ? (
                         <>
                              <div className="flex items-center gap-2">
-                                <span className="w-2 h-2 bg-[#1C1C1E] rounded-full animate-pulse"></span>
-                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8E8E93]">Syncing global wire</span>
+                                <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Syncing global wire</span>
                             </div>
-                            <div className="w-24 h-1 bg-[#E5E5EA] rounded-full overflow-hidden">
-                                <div className="h-full bg-[#1C1C1E] animate-progress-indeterminate"></div>
+                            <div className="w-24 h-1 bg-white/20 rounded-full overflow-hidden">
+                                <div className="h-full bg-white animate-progress-indeterminate"></div>
                             </div>
                         </>
                     ) : (
-                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D1D1D6]">
-                             All Caught Up
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em]">
+                             You're all caught up
                         </span>
                     )}
                 </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Byte } from '../types';
 
 interface NewsSlideProps {
@@ -9,6 +9,22 @@ interface NewsSlideProps {
 
 const NewsSlide: React.FC<NewsSlideProps> = ({ byte, onLike, onSave }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [inView, setInView] = useState(false);
+  const slideRef = useRef<HTMLDivElement>(null);
+
+  // Scroll Trigger Logic
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Use a threshold to trigger animation when the slide is sufficiently visible
+        setInView(entry.isIntersecting);
+      },
+      { threshold: 0.4 }
+    );
+
+    if (slideRef.current) observer.observe(slideRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -36,96 +52,147 @@ const NewsSlide: React.FC<NewsSlideProps> = ({ byte, onLike, onSave }) => {
   };
 
   return (
-    // WRAPPER: Centers the floating card vertically in the snap area
-    // 'box-border' and padding ensures the card floats with margins
-    <div className="snap-center h-screen w-full flex items-start justify-center p-4 pt-4 md:p-6 md:pt-4 box-border">
+    // WRAPPER: Full screen snap item
+    <div 
+        ref={slideRef}
+        className="snap-start relative h-screen w-full bg-black overflow-hidden flex flex-col justify-end perspective-1000"
+    >
       
-      {/* 3D FLOATING CARD "Monolith" */}
-      {/* Matches GoldenCare style: Rounded 40px, white surface, elevated soft shadow */}
-      <div className="relative w-full max-w-[400px] bg-white rounded-[40px] soft-depth-card overflow-hidden flex flex-col h-[75vh] md:h-[80vh] transition-transform duration-500 hover:scale-[1.01]">
-        
-        {/* TOP: Image Area (Takes ~55% height) */}
-        {/* Rounded corners inside to create a 'frame' effect */}
-        <div className="relative h-[55%] w-full overflow-hidden rounded-t-[40px] rounded-b-[32px] m-1.5 shadow-inner group">
-             <img 
-                src={byte.fileUrl} 
-                alt={byte.title} 
-                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                loading="lazy"
-             />
+      {/* 1. BACKGROUND IMAGE (Full Screen with Ken Burns Effect) */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+         <img 
+            src={byte.fileUrl} 
+            alt={byte.title} 
+            className={`
+                w-full h-full object-cover transition-transform duration-[8s] ease-out
+                ${inView ? 'scale-110 opacity-100' : 'scale-100 opacity-90'}
+            `}
+            loading="lazy"
+         />
+         {/* Gradients for readability */}
+         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80"></div>
+         <div className="absolute bottom-0 left-0 right-0 h-3/5 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+      </div>
+
+      {/* 2. FLOATING CONTENT LAYER */}
+      <div className="relative z-10 w-full px-4 pb-20 md:pb-8 flex flex-row items-end justify-between">
+         
+         {/* LEFT: Text Content Card (White Overlay style) */}
+         <div className={`w-[82%] md:w-[60%] mb-4 transition-all duration-700 delay-100 ease-out transform ${inView ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'}`}>
              
-             {/* Gradient overlay for text protection if needed, though mostly clean */}
-             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-60"></div>
-
-             {/* Category Pill Floating on Image */}
-             <div className="absolute top-4 left-4">
-                 <span className="px-4 py-1.5 bg-white/90 backdrop-blur-md rounded-full text-[10px] text-[#1C1C1E] font-bold uppercase tracking-widest shadow-sm border border-white/50">
-                    {byte.category}
-                 </span>
-             </div>
-        </div>
-
-        {/* BOTTOM: Content Area */}
-        <div className="flex-1 flex flex-col justify-between p-6 md:p-8 bg-white relative">
-             
-             <div className="flex flex-col gap-3">
-                 {/* Metadata */}
-                 <div className="flex items-center gap-2 opacity-60">
-                    <span className="text-[10px] font-bold text-[#1C1C1E] uppercase tracking-wide">{byte.publisher}</span>
-                    <span className="w-1 h-1 bg-[#1C1C1E] rounded-full"></span>
-                    <span className="text-[10px] text-[#1C1C1E] uppercase tracking-wide">{byte.publicationDate}</span>
-                 </div>
-
-                 {/* Title - Large Serif/Display */}
-                 <h2 className="font-serif-display text-2xl md:text-3xl font-bold text-[#1C1C1E] leading-[1.15] tracking-tight">
-                    {byte.title}
-                 </h2>
-
-                 {/* Abstract - Short snippet with expand */}
-                 <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-40 overflow-y-auto' : 'max-h-16'}`}>
-                    <p 
-                        className="font-sans text-sm leading-relaxed text-[#505055] cursor-pointer"
-                        onClick={() => setIsExpanded(!isExpanded)}
-                    >
-                        {byte.abstract}
-                    </p>
-                 </div>
+             {/* Volv Bits Pill */}
+             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/20 backdrop-blur-md rounded-full mb-4 border border-white/10 shadow-sm">
+                <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-[8px] text-white font-bold">V</div>
+                <span className="text-[10px] font-bold text-white uppercase tracking-widest">Volv Bits</span>
              </div>
 
-             {/* Actions */}
-             <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-100">
-                 <button 
-                    onClick={handleFullStory}
-                    className="px-6 py-3 bg-[#1C1C1E] text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-[#3A3A3C] transition-colors soft-depth-button"
-                 >
-                    Read
-                 </button>
+             {/* White Card Container */}
+             <div 
+                className="bg-white rounded-[28px] p-5 shadow-2xl origin-bottom-left"
+                onClick={() => setIsExpanded(!isExpanded)}
+             >
+                 <div className="flex flex-col gap-2">
+                     {/* Headline */}
+                     <h2 className="font-serif-display text-xl md:text-2xl font-bold text-[#1C1C1E] leading-tight">
+                        {byte.title}
+                     </h2>
 
-                 <div className="flex items-center gap-2">
-                     <button 
-                        onClick={() => onLike(byte.id)} 
-                        className="w-10 h-10 rounded-full bg-[#F2F1EC] flex items-center justify-center transition-transform active:scale-95 hover:bg-[#E5E4DE] soft-depth-button"
-                     >
-                         <svg className={`w-5 h-5 ${byte.isLiked ? 'fill-red-500 text-red-500' : 'fill-none text-[#1C1C1E]'}`} stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                           <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                         </svg>
-                     </button>
+                     {/* Abstract */}
+                     <div className={`transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] overflow-hidden ${isExpanded ? 'max-h-60' : 'max-h-[4.5rem]'}`}>
+                        <p className="font-sans text-sm leading-relaxed text-[#505055]">
+                            {byte.abstract}
+                        </p>
+                     </div>
                      
-                     <button 
-                        onClick={() => onSave(byte.id)} 
-                        className="w-10 h-10 rounded-full bg-[#F2F1EC] flex items-center justify-center transition-transform active:scale-95 hover:bg-[#E5E4DE] soft-depth-button"
-                     >
-                       <svg className={`w-5 h-5 ${byte.isSaved ? 'fill-[#1C1C1E] text-[#1C1C1E]' : 'fill-none text-[#1C1C1E]'}`} stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                       </svg>
-                     </button>
-
-                     <button onClick={handleShare} className="w-10 h-10 rounded-full bg-[#F2F1EC] flex items-center justify-center transition-transform active:scale-95 hover:bg-[#E5E4DE] soft-depth-button">
-                        <svg className="w-5 h-5 text-[#1C1C1E]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-                     </button>
+                     {/* Read More / Publisher */}
+                     <div className="flex items-center justify-between pt-2 mt-1 border-t border-gray-100/50">
+                        <div className="flex items-center gap-2">
+                            {byte.sourceUrl && (
+                                <img src={`https://www.google.com/s2/favicons?domain=${new URL(byte.sourceUrl).hostname}&sz=32`} className="w-4 h-4 rounded-full grayscale opacity-60" alt="" />
+                            )}
+                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{byte.publisher}</span>
+                        </div>
+                        {isExpanded && (
+                             <button 
+                                onClick={handleFullStory}
+                                className="px-4 py-2 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-gray-800"
+                             >
+                                Read Article
+                             </button>
+                        )}
+                     </div>
                  </div>
              </div>
-        </div>
+
+         </div>
+
+         {/* RIGHT: Floating Actions (Vertical Stack) - Staggered Entry */}
+         <div className="flex flex-col items-center gap-6 mb-8 mr-1">
+             
+             {/* Avatar / Profile */}
+             <div className={`relative group transition-all duration-500 delay-[200ms] ${inView ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}>
+                 <div className="w-10 h-10 rounded-full border-2 border-white p-0.5 overflow-hidden">
+                     <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100" className="w-full h-full rounded-full object-cover" alt="Avatar" />
+                 </div>
+                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-red-500 rounded-full w-4 h-4 flex items-center justify-center border border-white">
+                    <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                 </div>
+             </div>
+
+             {/* Like */}
+             <div className={`flex flex-col items-center gap-1 transition-all duration-500 delay-[300ms] ${inView ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}>
+                 <button 
+                    onClick={() => onLike(byte.id)}
+                    className="p-2 transition-transform active:scale-75"
+                 >
+                     <svg 
+                        className={`w-8 h-8 drop-shadow-md transition-all duration-300 ${byte.isLiked ? 'fill-red-500 text-red-500 scale-110' : 'fill-white/10 text-white hover:scale-110'}`} 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor" 
+                        strokeWidth={byte.isLiked ? 0 : 2}
+                     >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                     </svg>
+                 </button>
+                 <span className="text-white text-xs font-bold drop-shadow-md">{byte.likes}</span>
+             </div>
+
+             {/* Comment */}
+             <div className={`flex flex-col items-center gap-1 transition-all duration-500 delay-[400ms] ${inView ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}>
+                 <button className="p-2 transition-transform active:scale-75 hover:scale-110">
+                     <svg className="w-7 h-7 text-white drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" clipRule="evenodd" d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 13.5997 2.37562 15.1116 3.04346 16.4525C3.22094 16.8088 3.28001 17.2161 3.17712 17.6006L2.58151 19.8267C2.32295 20.793 3.20701 21.677 4.17335 21.4185L6.39939 20.8229C6.78393 20.72 7.19121 20.7791 7.54753 20.9565C8.88837 21.6244 10.4003 22 12 22ZM8 11C8 11.5523 8.44772 12 9 12H15C15.5523 12 16 11.5523 16 11C16 10.4477 15.5523 10 15 10H9C8.44772 10 8 10.4477 8 11ZM8 15C8 15.5523 8.44772 16 9 16H12C12.5523 16 13 15.5523 13 15C13 14.4477 12.5523 14 12 14H9C8.44772 14 8 14.4477 8 15Z" opacity="0.9" /></svg>
+                 </button>
+                 <span className="text-white text-xs font-bold drop-shadow-md">{byte.comments}</span>
+             </div>
+
+             {/* Save */}
+             <div className={`flex flex-col items-center gap-1 transition-all duration-500 delay-[500ms] ${inView ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}>
+                 <button 
+                    onClick={() => onSave(byte.id)} 
+                    className="p-2 transition-transform active:scale-75"
+                 >
+                    <svg 
+                        className={`w-7 h-7 drop-shadow-md transition-all duration-300 ${byte.isSaved ? 'fill-white text-white' : 'fill-none text-white hover:scale-110'}`} 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        viewBox="0 0 24 24"
+                    >
+                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                    </svg>
+                 </button>
+                 <span className="text-white text-xs font-bold drop-shadow-md">Save</span>
+             </div>
+
+             {/* Share */}
+             <div className={`flex flex-col items-center gap-1 transition-all duration-500 delay-[600ms] ${inView ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}>
+                 <button onClick={handleShare} className="p-2 transition-transform active:scale-75 hover:scale-110">
+                    <svg className="w-7 h-7 text-white drop-shadow-md" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                 </button>
+                 <span className="text-white text-xs font-bold drop-shadow-md">Share</span>
+             </div>
+
+         </div>
+
       </div>
     </div>
   );
