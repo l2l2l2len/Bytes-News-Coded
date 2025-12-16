@@ -129,18 +129,8 @@ const NewsSlide: React.FC<NewsSlideProps> = ({ byte, onLike, onSave }) => {
          {/* RIGHT: Floating Actions (Vertical Stack) - Fixed Width to prevent overlapping */}
          <div className="flex flex-col items-center gap-5 mb-2 shrink-0 w-12">
              
-             {/* Avatar / Profile */}
-             <div className={`relative group transition-all duration-500 delay-[200ms] ${inView ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}>
-                 <div className="w-9 h-9 rounded-full border-2 border-white p-0.5 overflow-hidden">
-                     <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100" className="w-full h-full rounded-full object-cover" alt="Avatar" />
-                 </div>
-                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-red-500 rounded-full w-3 h-3 flex items-center justify-center border border-white">
-                    <svg className="w-1.5 h-1.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
-                 </div>
-             </div>
-
              {/* Like */}
-             <div className={`flex flex-col items-center gap-0.5 transition-all duration-500 delay-[300ms] ${inView ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}>
+             <div className={`flex flex-col items-center gap-0.5 transition-all duration-500 delay-[200ms] ${inView ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}>
                  <button 
                     onClick={() => onLike(byte.id)}
                     className="p-1.5 transition-transform active:scale-75"
@@ -158,7 +148,7 @@ const NewsSlide: React.FC<NewsSlideProps> = ({ byte, onLike, onSave }) => {
              </div>
 
              {/* Comment */}
-             <div className={`flex flex-col items-center gap-0.5 transition-all duration-500 delay-[400ms] ${inView ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}>
+             <div className={`flex flex-col items-center gap-0.5 transition-all duration-500 delay-[300ms] ${inView ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}>
                  <button className="p-1.5 transition-transform active:scale-75 hover:scale-110">
                      <svg className="w-6 h-6 text-white drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" clipRule="evenodd" d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 13.5997 2.37562 15.1116 3.04346 16.4525C3.22094 16.8088 3.28001 17.2161 3.17712 17.6006L2.58151 19.8267C2.32295 20.793 3.20701 21.677 4.17335 21.4185L6.39939 20.8229C6.78393 20.72 7.19121 20.7791 7.54753 20.9565C8.88837 21.6244 10.4003 22 12 22ZM8 11C8 11.5523 8.44772 12 9 12H15C15.5523 12 16 11.5523 16 11C16 10.4477 15.5523 10 15 10H9C8.44772 10 8 10.4477 8 11ZM8 15C8 15.5523 8.44772 16 9 16H12C12.5523 16 13 15.5523 13 15C13 14.4477 12.5523 14 12 14H9C8.44772 14 8 14.4477 8 15Z" opacity="0.9" /></svg>
                  </button>
@@ -166,7 +156,7 @@ const NewsSlide: React.FC<NewsSlideProps> = ({ byte, onLike, onSave }) => {
              </div>
 
              {/* Save */}
-             <div className={`flex flex-col items-center gap-0.5 transition-all duration-500 delay-[500ms] ${inView ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}>
+             <div className={`flex flex-col items-center gap-0.5 transition-all duration-500 delay-[400ms] ${inView ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}>
                  <button 
                     onClick={() => onSave(byte.id)} 
                     className="p-1.5 transition-transform active:scale-75"
@@ -184,7 +174,7 @@ const NewsSlide: React.FC<NewsSlideProps> = ({ byte, onLike, onSave }) => {
              </div>
 
              {/* Share */}
-             <div className={`flex flex-col items-center gap-0.5 transition-all duration-500 delay-[600ms] ${inView ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}>
+             <div className={`flex flex-col items-center gap-0.5 transition-all duration-500 delay-[500ms] ${inView ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}>
                  <button onClick={handleShare} className="p-1.5 transition-transform active:scale-75 hover:scale-110">
                     <svg className="w-6 h-6 text-white drop-shadow-md" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                  </button>
