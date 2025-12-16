@@ -65,8 +65,7 @@ const App: React.FC = () => {
     if (initialized.current) return;
     initialized.current = true;
 
-    const hasSeenOnboarding = localStorage.getItem('bytes_onboarded') === 'true';
-    if (hasSeenOnboarding) setShowOnboarding(false);
+    // Force Onboarding to show by not checking localStorage
     
     const storedPrefs = localStorage.getItem('bytes_prefs');
     if (storedPrefs) {
@@ -76,9 +75,7 @@ const App: React.FC = () => {
     
     setNews(PAPERS.map(p => ({ ...p, isLiked: false, isSaved: false })));
 
-    if (hasSeenOnboarding) {
-        setTimeout(startNewsStream, 1000);
-    }
+    // Removed auto-start of stream here, it triggers after onboarding completes
   }, [startNewsStream]);
 
   const handleRefresh = () => {
