@@ -124,7 +124,8 @@ const App: React.FC = () => {
   }, [news, selectedTopics, searchTerm]);
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-black">
+    // FIX: Use h-[100dvh] (Dynamic Viewport Height) to handle mobile browser address bars gracefully
+    <div className="relative h-[100dvh] w-full overflow-hidden bg-black">
       
       {showOnboarding ? (
         <Onboarding onComplete={handleOnboardingComplete} />
@@ -142,7 +143,7 @@ const App: React.FC = () => {
             {/* FEED CONTAINER - Full Height, Snap Scrolling */}
             <div 
                 ref={feedRef}
-                className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar"
+                className="h-[100dvh] w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar"
             >
                 {filteredNews.length > 0 ? (
                   <>
@@ -156,7 +157,7 @@ const App: React.FC = () => {
                     ))}
                   </>
                 ) : (
-                    <div className="h-screen w-full flex flex-col items-center justify-center text-center p-8 snap-center bg-[#F2F1EC]">
+                    <div className="h-[100dvh] w-full flex flex-col items-center justify-center text-center p-8 snap-center bg-[#F2F1EC]">
                         <h3 className="text-3xl font-serif-display font-bold text-[#1C1C1E] mb-3">Quiet today.</h3>
                         <p className="text-[#8E8E93] text-sm mb-8">Try adjusting your interests.</p>
                         <button 
@@ -169,7 +170,7 @@ const App: React.FC = () => {
                 )}
 
                 {/* Status Indicator */}
-                <div className="h-[20vh] w-full flex flex-col items-center justify-center gap-3 snap-center bg-black text-white/50 pb-20">
+                <div className="h-[20dvh] w-full flex flex-col items-center justify-center gap-3 snap-center bg-black text-white/50 pb-20">
                     {isStreaming ? (
                         <>
                              <div className="flex items-center gap-2">
