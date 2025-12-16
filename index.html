@@ -12,12 +12,10 @@
       :root {
         --font-serif: 'Playfair Display', serif;
         --font-sans: 'Manrope', sans-serif;
-        --color-bg: #F2F1EC;
-        --color-surface: #FFFFFF;
-        --color-text-main: #1C1C1E;
-        --color-text-muted: #8E8E93;
-        --shadow-soft: 0 20px 40px -12px rgba(28, 28, 30, 0.08), 0 4px 12px -2px rgba(28, 28, 30, 0.04);
-        --shadow-inner-light: inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
+        --color-bg: #fff1f2; /* Rose 50 */
+        --color-surface: rgba(255, 255, 255, 0.6);
+        --color-text-main: #4a044e; /* Fuchsia 950 - Deep Rose/Purple for contrast */
+        --color-text-muted: rgba(131, 24, 67, 0.7); /* Pink 900 low opacity */
       }
 
       html, body, #root {
@@ -41,19 +39,34 @@
       *::-webkit-scrollbar { display: none; }
       * { -ms-overflow-style: none; scrollbar-width: none; }
 
-      /* Soft 3D Depth Utilities */
-      .soft-depth-card {
-        background-color: var(--color-surface);
-        box-shadow: var(--shadow-soft), var(--shadow-inner-light);
-        border: 1px solid rgba(255, 255, 255, 0.6);
+      /* Glassmorphism Utilities - Light Mode */
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.65);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 4px 30px rgba(244, 63, 94, 0.1); /* Soft Pink Shadow */
       }
       
-      .soft-depth-button {
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      .glass-card {
+        background: rgba(255, 255, 255, 0.75); /* Milky White Glass */
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        box-shadow: 0 8px 32px 0 rgba(190, 24, 93, 0.1); /* Rose Shadow */
       }
 
-      .soft-inset {
-        box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.03);
+      /* Animations */
+      @keyframes auraShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+        100% { transform: translateY(0px); }
       }
     </style>
   <script type="importmap">

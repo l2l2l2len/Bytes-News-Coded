@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import NewsSlide from './components/NewsSlide';
 import CurateDrawer from './components/CurateDrawer';
 import Onboarding from './components/Onboarding';
+import InteractiveBackground from './components/InteractiveBackground';
 import { PAPERS } from './constants';
 import { fetchRealTimeNews } from './services/geminiService';
 import { Byte, UserPreferences } from './types';
@@ -22,9 +23,9 @@ const App: React.FC = () => {
   const initialized = useRef(false);
 
   const BATCHES = useMemo(() => [
-    ['Breaking News Global', 'World Politics'],
+    ['US National News', 'International World News'],
     ['Technology Trends', 'Artificial Intelligence'],
-    ['Financial Markets', 'Crypto & Web3'],
+    ['Financial Markets', 'Global Economy'],
     ['Science Breakthroughs', 'Health & Medicine'],
     ['Entertainment', 'Internet Culture', 'Sports']
   ], []);
@@ -124,14 +125,16 @@ const App: React.FC = () => {
   }, [news, selectedTopics, searchTerm]);
 
   return (
-    // FIX: Use h-[100dvh] (Dynamic Viewport Height) to handle mobile browser address bars gracefully
-    <div className="relative h-[100dvh] w-full overflow-hidden bg-black">
+    <div className="relative h-[100dvh] w-full overflow-hidden text-[#4a044e]">
+      
+      {/* BACKGROUND LAYER */}
+      <InteractiveBackground />
       
       {showOnboarding ? (
         <Onboarding onComplete={handleOnboardingComplete} />
       ) : (
         <>
-          <div className="relative z-10 w-full h-full bg-black">
+          <div className="relative z-10 w-full h-full">
             <Navbar 
                 onProfileClick={() => setIsDrawerOpen(true)}
                 onSearchClick={() => setIsDrawerOpen(true)}
@@ -140,7 +143,7 @@ const App: React.FC = () => {
                 isLiveLoading={isStreaming}
             />
 
-            {/* FEED CONTAINER - Full Height, Snap Scrolling */}
+            {/* FEED CONTAINER */}
             <div 
                 ref={feedRef}
                 className="h-[100dvh] w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar"
@@ -157,28 +160,30 @@ const App: React.FC = () => {
                     ))}
                   </>
                 ) : (
-                    <div className="h-[100dvh] w-full flex flex-col items-center justify-center text-center p-8 snap-center bg-[#F2F1EC]">
-                        <h3 className="text-3xl font-serif-display font-bold text-[#1C1C1E] mb-3">Quiet today.</h3>
-                        <p className="text-[#8E8E93] text-sm mb-8">Try adjusting your interests.</p>
-                        <button 
-                          onClick={() => setIsDrawerOpen(true)}
-                          className="px-8 py-4 rounded-full bg-[#1C1C1E] text-white font-bold text-xs uppercase tracking-widest shadow-lg hover:scale-105 transition-transform"
-                        >
-                          Curate Feed
-                        </button>
+                    <div className="h-[100dvh] w-full flex flex-col items-center justify-center text-center p-8 snap-center">
+                        <div className="glass-panel p-8 rounded-[32px] max-w-sm w-full mx-auto shadow-xl">
+                            <h3 className="text-3xl font-serif-display font-bold text-[#831843] mb-3">Quiet today.</h3>
+                            <p className="text-[#831843]/60 text-sm mb-8">Try adjusting your interests.</p>
+                            <button 
+                              onClick={() => setIsDrawerOpen(true)}
+                              className="px-8 py-4 rounded-full bg-[#831843] text-white font-bold text-xs uppercase tracking-widest shadow-lg hover:scale-105 transition-transform"
+                            >
+                              Curate Feed
+                            </button>
+                        </div>
                     </div>
                 )}
 
                 {/* Status Indicator */}
-                <div className="h-[20dvh] w-full flex flex-col items-center justify-center gap-3 snap-center bg-black text-white/50 pb-20">
+                <div className="h-[20dvh] w-full flex flex-col items-center justify-center gap-3 snap-center text-[#831843]/50 pb-20">
                     {isStreaming ? (
                         <>
                              <div className="flex items-center gap-2">
-                                <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                                <span className="w-2 h-2 bg-[#be185d] rounded-full animate-pulse"></span>
                                 <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Syncing global wire</span>
                             </div>
-                            <div className="w-24 h-1 bg-white/20 rounded-full overflow-hidden">
-                                <div className="h-full bg-white animate-progress-indeterminate"></div>
+                            <div className="w-24 h-1 bg-[#831843]/10 rounded-full overflow-hidden">
+                                <div className="h-full bg-[#be185d] animate-progress-indeterminate"></div>
                             </div>
                         </>
                     ) : (

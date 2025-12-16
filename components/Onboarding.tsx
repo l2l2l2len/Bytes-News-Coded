@@ -48,47 +48,41 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   }, [step]);
 
   return (
-    <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-[#F2F1EC] transition-opacity duration-700 ${isExiting ? 'opacity-0' : 'opacity-100'}`}>
+    <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-700 ${isExiting ? 'opacity-0' : 'opacity-100'}`}>
       
-      {/* 1. Background Visuals (Subtle Blobs) */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-          <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-white rounded-full blur-[80px] opacity-70"></div>
-          <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-[#E5E4DE] rounded-full blur-[60px] opacity-50"></div>
-      </div>
-
-      {/* 2. Main Floating Card */}
+      {/* 1. Main Floating Card (Light Glass) */}
       <div className="relative z-10 w-full max-w-md mx-6">
         
         {/* Card Body */}
-        <div className="bg-white rounded-[40px] soft-depth-card p-8 md:p-12 transition-all duration-500 animate-fade-in-up">
+        <div className="glass-card rounded-[40px] p-8 md:p-12 transition-all duration-500 animate-fade-in-up shadow-2xl">
             
             {/* Step 1: Welcome / "Get Started" */}
             {step === 1 && (
                 <div className="flex flex-col items-center text-center">
-                    <div className="w-20 h-20 mb-8 flex items-center justify-center bg-[#1C1C1E] text-white rounded-3xl shadow-xl transform -rotate-3">
+                    <div className="w-20 h-20 mb-8 flex items-center justify-center bg-white shadow-lg text-[#831843] rounded-3xl transform -rotate-3 border border-rose-100">
                          <span className="font-serif-display text-4xl font-bold">V</span>
                     </div>
                     
-                    <h1 className="text-4xl font-serif-display font-bold text-[#1C1C1E] mb-3 tracking-tight">
+                    <h1 className="text-4xl font-serif-display font-bold text-[#4a044e] mb-3 tracking-tight drop-shadow-sm">
                         Volv.
                     </h1>
-                    <p className="text-[#8E8E93] mb-10 font-sans text-sm leading-relaxed max-w-xs mx-auto">
+                    <p className="text-[#831843]/70 mb-10 font-sans text-sm leading-relaxed max-w-xs mx-auto">
                         Intelligent news, distilled for the modern mind. Experience clarity in 9 seconds.
                     </p>
 
                     <div className="w-full space-y-3">
                         <button 
                             onClick={handleNext}
-                            className="w-full py-4 bg-[#1C1C1E] text-white rounded-full font-bold text-xs uppercase tracking-widest shadow-lg hover:bg-black transition-all hover:scale-[1.02]"
+                            className="w-full py-4 bg-[#831843] text-white rounded-full font-bold text-xs uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-transform"
                         >
                             Get Started
                         </button>
-                        <button className="w-full py-4 bg-[#F2F1EC] text-[#1C1C1E] rounded-full font-bold text-xs uppercase tracking-widest hover:bg-[#E5E4DE] transition-colors">
+                        <button className="w-full py-4 bg-white text-[#831843] border border-rose-200 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-rose-50 transition-colors">
                             Log In
                         </button>
                     </div>
                     
-                    <p className="mt-8 text-[10px] text-gray-400">By continuing you agree to our Terms.</p>
+                    <p className="mt-8 text-[10px] text-[#831843]/40">By continuing you agree to our Terms.</p>
                 </div>
             )}
 
@@ -96,8 +90,8 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             {step === 2 && (
                 <div className="flex flex-col h-full">
                     <div className="text-center mb-8">
-                        <h2 className="text-2xl font-serif-display font-bold text-[#1C1C1E] mb-2">Your Interests</h2>
-                        <p className="text-[#8E8E93] text-xs font-medium">Select 3 topics to tailor your feed</p>
+                        <h2 className="text-2xl font-serif-display font-bold text-[#4a044e] mb-2">Your Interests</h2>
+                        <p className="text-[#831843]/60 text-xs font-medium">Select 3 topics to tailor your feed</p>
                     </div>
 
                     <div className="flex flex-wrap gap-2.5 justify-center mb-10">
@@ -110,8 +104,8 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                                     className={`
                                         px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 border
                                         ${isSelected 
-                                            ? 'bg-[#1C1C1E] text-white border-[#1C1C1E] shadow-md transform scale-105' 
-                                            : 'bg-white border-[#E5E5EA] text-[#505055] hover:border-[#D1D1D6] hover:bg-[#F9F9F7]'}
+                                            ? 'bg-[#831843] text-white border-[#831843] shadow-md transform scale-105' 
+                                            : 'bg-white border-rose-200 text-[#831843]/80 hover:bg-rose-50'}
                                     `}
                                 >
                                     {t}
@@ -124,7 +118,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                         onClick={handleNext}
                         disabled={prefs.topics.length < 3}
                         className="w-full py-4 rounded-full font-bold text-xs uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed
-                        bg-[#1C1C1E] text-white shadow-lg hover:shadow-xl hover:scale-[1.01]"
+                        bg-[#831843] text-white shadow-lg hover:shadow-xl hover:scale-[1.01]"
                     >
                         Continue
                     </button>
@@ -135,8 +129,8 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             {step === 3 && (
                 <div>
                      <div className="text-center mb-8">
-                        <h2 className="text-2xl font-serif-display font-bold text-[#1C1C1E] mb-2">Reading Style</h2>
-                        <p className="text-[#8E8E93] text-xs font-medium">How much depth do you need today?</p>
+                        <h2 className="text-2xl font-serif-display font-bold text-[#4a044e] mb-2">Reading Style</h2>
+                        <p className="text-[#831843]/60 text-xs font-medium">How much depth do you need today?</p>
                     </div>
 
                     <div className="space-y-3 mb-10">
@@ -150,14 +144,14 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                                     className={`
                                         w-full p-5 flex justify-between items-center text-left transition-all border rounded-[24px]
                                         ${isSelected 
-                                            ? 'bg-[#F9F9F7] border-[#1C1C1E] shadow-sm' 
-                                            : 'bg-white border-[#E5E5EA] hover:bg-[#F9F9F7] hover:border-[#D1D1D6]'}
+                                            ? 'bg-rose-100 border-rose-200 text-[#4a044e] shadow-sm' 
+                                            : 'bg-white border-rose-100 text-[#831843]/60 hover:bg-rose-50'}
                                     `}
                                 >
-                                    <span className={`font-bold text-base ${isSelected ? 'text-[#1C1C1E]' : 'text-[#505055]'}`}>{style}</span>
+                                    <span className={`font-bold text-base`}>{style}</span>
                                     <div className={`
                                         w-5 h-5 rounded-full border flex items-center justify-center transition-colors
-                                        ${isSelected ? 'border-[#1C1C1E] bg-[#1C1C1E]' : 'border-[#C7C7CC]'}
+                                        ${isSelected ? 'border-[#831843] bg-[#831843]' : 'border-rose-300'}
                                     `}>
                                         {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                                     </div>
@@ -172,14 +166,14 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             {step === 4 && (
                 <div className="flex flex-col items-center justify-center py-12">
                     <div className="relative w-16 h-16 mb-8">
-                        <svg className="animate-spin w-full h-full text-[#1C1C1E]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin w-full h-full text-[#be185d]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                     </div>
                     
-                    <h2 className="text-xl font-serif-display font-bold text-[#1C1C1E] mb-2">Curating Feed</h2>
-                    <p className="text-xs text-[#8E8E93] uppercase tracking-widest animate-pulse">Designing your experience...</p>
+                    <h2 className="text-xl font-serif-display font-bold text-[#4a044e] mb-2">Curating Feed</h2>
+                    <p className="text-xs text-[#831843]/60 uppercase tracking-widest animate-pulse">Designing your experience...</p>
                 </div>
             )}
 
@@ -187,7 +181,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         
         {/* Footer Branding */}
         <div className="text-center mt-8">
-             <p className="text-[9px] text-[#C7C7CC] uppercase tracking-[0.2em] font-bold">Powered by Gemini</p>
+             <p className="text-[9px] text-[#4a044e]/40 uppercase tracking-[0.2em] font-bold">Powered by Gemini</p>
         </div>
 
       </div>

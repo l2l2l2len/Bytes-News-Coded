@@ -1,131 +1,141 @@
 import React from 'react';
 
 const InteractiveBackground: React.FC = () => {
-  // Generate random 3D shapes and Information Symbols
-  const elements = Array.from({ length: 18 }).map((_, i) => ({
-    id: i,
-    type: i % 2 === 0 ? 'cube' : 'symbol',
-    symbol: ['{ }', '01', '⌘', '∑', '⚡', '◉', '//', '⨝'][Math.floor(Math.random() * 8)],
-    left: `${Math.floor(Math.random() * 90) + 5}%`,
-    top: `${Math.floor(Math.random() * 90) + 5}%`,
-    size: Math.floor(Math.random() * 40) + 30, // Size in px
-    duration: Math.random() * 20 + 15,
-    delay: Math.random() * -20,
-    // Colors: Strong, rich tones to pop against the pastel background
-    color: ['#4f46e5', '#db2777', '#0891b2', '#7c3aed'][Math.floor(Math.random() * 4)], // Indigo, Pink, Cyan, Violet
-    depth: Math.random() * 200 - 100, // Z-axis variance
-  }));
-
   return (
-    <div className="fixed inset-0 z-0 overflow-hidden perspective-[800px] pointer-events-none">
+    <div className="fixed inset-0 z-0 overflow-hidden bg-[#fff1f2]">
       
-      {/* 1. Animated Aura Gradient Background */}
-      <div 
-        className="absolute inset-0 bg-gradient-to-br from-indigo-100 via-purple-100 to-cyan-100 animate-aura"
-        style={{
-          backgroundSize: '400% 400%',
-          animation: 'auraShift 15s ease infinite'
-        }}
-      ></div>
+      {/* 1. Soft Light Gradient Base */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#fff1f2] via-[#ffe4e6] to-[#fce7f3] opacity-80"></div>
 
-      {/* 2. Floating Orbs for extra depth */}
-      <div className="absolute top-[10%] left-[20%] w-[40vw] h-[40vw] bg-rose-300/20 blur-[100px] rounded-full mix-blend-multiply animate-pulse" style={{animationDuration: '8s'}}></div>
-      <div className="absolute bottom-[10%] right-[10%] w-[35vw] h-[35vw] bg-blue-300/20 blur-[100px] rounded-full mix-blend-multiply animate-pulse" style={{animationDuration: '10s'}}></div>
-      <div className="absolute top-[40%] left-[60%] w-[30vw] h-[30vw] bg-amber-200/20 blur-[80px] rounded-full mix-blend-multiply animate-pulse" style={{animationDuration: '12s'}}></div>
+      {/* 2. 3D Perspective Grid (The Floor) - Soft Pink Lines */}
+      <div className="absolute inset-0 perspective-container opacity-60">
+        <div className="grid-plane"></div>
+      </div>
 
-      {/* 3. Texture Overlay */}
-      <div className="film-grain"></div>
+      {/* 3. Floating 3D Glass Tiles - Crystal Clear */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none perspective-container-tiles">
+         
+         {/* Large Center-Left Tile */}
+         <div className="tile-3d tile-1">
+            <div className="tile-face"></div>
+         </div>
+         
+         {/* Small Top-Right Tile */}
+         <div className="tile-3d tile-2">
+            <div className="tile-face"></div>
+         </div>
+         
+         {/* Bottom-Center Tile */}
+         <div className="tile-3d tile-3">
+             <div className="tile-face"></div>
+         </div>
 
-      {/* 4. Floating 3D Elements */}
-      {elements.map((el) => {
-        // Dynamic CSS variables for size and color
-        const style = {
-          '--s': `${el.size}px`,
-          '--c': el.color,
-          left: el.left,
-          top: el.top,
-          animationDuration: `${el.duration}s`,
-          animationDelay: `${el.delay}s`,
-        } as React.CSSProperties;
+         {/* Floating Particle Tile */}
+         <div className="tile-3d tile-4">
+             <div className="tile-face"></div>
+         </div>
+      </div>
 
-        if (el.type === 'symbol') {
-          return (
-            <div 
-              key={el.id} 
-              className="floating-symbol"
-              style={style}
-            >
-              {el.symbol}
-            </div>
-          );
-        }
+      {/* 4. Glowing Aura Orbs (Pastel / Peach / Rose) */}
+      <div className="absolute top-[10%] left-[20%] w-[60vw] h-[60vw] bg-rose-300/30 rounded-full blur-[100px] mix-blend-multiply animate-pulse-slow"></div>
+      <div className="absolute bottom-[20%] right-[10%] w-[50vw] h-[50vw] bg-pink-300/30 rounded-full blur-[120px] mix-blend-multiply animate-pulse-slow delay-1000"></div>
+      <div className="absolute top-[40%] right-[30%] w-[40vw] h-[40vw] bg-orange-100/40 rounded-full blur-[90px] mix-blend-overlay animate-pulse-slow delay-500"></div>
 
-        return (
-          <div key={el.id} className="cube-3d" style={style}>
-            <div className="face front"></div>
-            <div className="face back"></div>
-            <div className="face right"></div>
-            <div className="face left"></div>
-            <div className="face top"></div>
-            <div className="face bottom"></div>
-          </div>
-        );
-      })}
+      {/* 5. Grain/Noise Overlay - Subtle texture */}
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-30 mix-blend-soft-light"></div>
 
       <style>{`
-        /* --- 3D Cube Styles --- */
-        .cube-3d {
-          position: absolute;
-          width: var(--s);
-          height: var(--s);
-          transform-style: preserve-3d;
-          animation: float-rotate infinite linear;
+        .perspective-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
 
-        .face {
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          border: 1px solid var(--c);
-          /* Glassy look: Semi-transparent white with color tint */
-          background: rgba(255, 255, 255, 0.2);
-          box-shadow: 0 0 10px rgba(0,0,0,0.05);
-          opacity: 0.8;
-          backface-visibility: visible;
+        .perspective-container-tiles {
+            perspective: 1200px;
         }
 
-        /* Construct the Cube */
-        .front  { transform: rotateY(0deg) translateZ(calc(var(--s) / 2)); }
-        .back   { transform: rotateY(180deg) translateZ(calc(var(--s) / 2)); }
-        .right  { transform: rotateY(90deg) translateZ(calc(var(--s) / 2)); }
-        .left   { transform: rotateY(-90deg) translateZ(calc(var(--s) / 2)); }
-        .top    { transform: rotateX(90deg) translateZ(calc(var(--s) / 2)); }
-        .bottom { transform: rotateX(-90deg) translateZ(calc(var(--s) / 2)); }
-
-        /* --- Symbol Styles --- */
-        .floating-symbol {
-          position: absolute;
-          font-family: 'Space Grotesk', monospace;
-          font-weight: bold;
-          font-size: var(--s);
-          color: var(--c);
-          /* Crisp text in light mode */
-          text-shadow: 0 4px 10px rgba(255,255,255,0.5);
-          opacity: 0.9;
-          animation: float-bob infinite ease-in-out alternate;
+        .grid-plane {
+            position: absolute;
+            width: 300%;
+            height: 300%;
+            left: -100%;
+            top: -100%;
+            background-image: 
+                linear-gradient(to right, rgba(244, 63, 94, 0.15) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(244, 63, 94, 0.15) 1px, transparent 1px);
+            background-size: 80px 80px;
+            transform: rotateX(75deg);
+            animation: grid-scroll 4s linear infinite;
+            /* Fade out into distance */
+            mask-image: linear-gradient(to bottom, transparent 0%, black 40%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 40%);
         }
 
-        /* --- Animations --- */
-        @keyframes float-rotate {
-          0% { transform: translate3d(0, 0, 0) rotate3d(1, 1, 1, 0deg); }
-          50% { transform: translate3d(20px, -40px, 50px) rotate3d(1, 1, 1, 180deg); }
-          100% { transform: translate3d(0, 0, 0) rotate3d(1, 1, 1, 360deg); }
+        .tile-3d {
+            position: absolute;
+            transform-style: preserve-3d;
         }
 
-        @keyframes float-bob {
-          0% { transform: translateY(0) scale(1); opacity: 0.6; }
-          100% { transform: translateY(-30px) scale(1.1); opacity: 1; }
+        .tile-face {
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(4px);
+            box-shadow: 
+                0 4px 15px rgba(244, 63, 94, 0.1),
+                inset 0 0 20px rgba(255, 255, 255, 0.5);
+            transition: all 0.5s ease;
         }
+
+        /* Tile Positioning & Animation */
+        .tile-1 { 
+            top: 25%; left: 15%; width: 140px; height: 140px; 
+            animation: float-1 12s ease-in-out infinite; 
+        }
+        .tile-2 { 
+            top: 15%; right: 20%; width: 90px; height: 90px; 
+            animation: float-2 15s ease-in-out infinite; 
+        }
+        .tile-3 { 
+            bottom: 25%; left: 40%; width: 180px; height: 180px; 
+            animation: float-3 18s ease-in-out infinite; 
+        }
+        .tile-4 { 
+            top: 60%; right: 10%; width: 60px; height: 60px; 
+            animation: float-4 10s ease-in-out infinite; 
+        }
+
+        @keyframes grid-scroll {
+            0% { transform: rotateX(75deg) translateY(0); }
+            100% { transform: rotateX(75deg) translateY(80px); }
+        }
+
+        @keyframes float-1 {
+            0%, 100% { transform: translateZ(0) rotateX(15deg) rotateY(15deg); }
+            50% { transform: translateZ(40px) rotateX(25deg) rotateY(25deg) translateY(-20px); }
+        }
+        @keyframes float-2 {
+            0%, 100% { transform: translateZ(0) rotateX(-10deg) rotateY(-10deg); }
+            50% { transform: translateZ(60px) rotateX(0deg) rotateY(-20deg) translateY(30px); }
+        }
+        @keyframes float-3 {
+            0%, 100% { transform: translateZ(0) rotateX(5deg) rotateY(-5deg); }
+            50% { transform: translateZ(20px) rotateX(15deg) rotateY(5deg) translateY(-15px); }
+        }
+        @keyframes float-4 {
+            0%, 100% { transform: translateZ(0) rotateX(20deg) rotateY(10deg); }
+            50% { transform: translateZ(50px) rotateX(40deg) rotateY(30deg) translateY(10px); }
+        }
+
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+        }
+
+        .animate-pulse-slow { animation: pulse-slow 8s ease-in-out infinite; }
       `}</style>
     </div>
   );
