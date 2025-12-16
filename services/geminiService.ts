@@ -76,7 +76,7 @@ const generateFallbackNews = (topicString: string): Byte[] => {
         {
             id: `fallback-${Date.now()}-1`,
             title: `Latest Updates in ${mainTopic}`,
-            publisher: "Bytes System",
+            publisher: "Volv System",
             authors: ["AI Curator"],
             abstract: `We are experiencing high traffic on our live feed. This is a placeholder for real-time coverage on ${mainTopic} while we reconnect to the global news stream.`,
             category: mainTopic,

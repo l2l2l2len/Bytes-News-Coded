@@ -21,8 +21,6 @@ const App: React.FC = () => {
   const feedRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
 
-  // Define Batches for the "Massive Fetch" pipeline
-  // Broken down to prevent API overload, but run automatically
   const BATCHES = useMemo(() => [
     ['Breaking News Global', 'World Politics'],
     ['Technology Trends', 'Artificial Intelligence'],
@@ -31,43 +29,30 @@ const App: React.FC = () => {
     ['Entertainment', 'Internet Culture', 'Sports']
   ], []);
 
-  /**
-   * Massive Sequential Fetch
-   * Loads all batches one by one with a delay to respect API quotas (The "Correct Way")
-   */
   const startNewsStream = useCallback(async () => {
     if (!process.env.API_KEY || isStreaming) return;
     
     setIsStreaming(true);
     setStreamStatus('Initializing global feed...');
 
-    // 1. Reset or Prep
-    // Note: We don't clear PAPERS (static data) immediately so the user has something to read.
-
     for (let i = 0; i < BATCHES.length; i++) {
         const batchTopics = BATCHES[i];
         setStreamStatus(`Syncing: ${batchTopics.join(' & ')}...`);
         
         try {
-            // Fetch
             const newBytes = await fetchRealTimeNews(batchTopics);
-            
-            // Append immediately
             setNews(prev => {
                 const existingIds = new Set(prev.map(p => p.id));
                 const uniqueNew = newBytes.filter(b => !existingIds.has(b.id));
                 return [...prev, ...uniqueNew];
             });
 
-            // Delay for Rate Limiting (Throttle)
-            // 2000ms delay + execution time usually keeps us under 15 RPM
             if (i < BATCHES.length - 1) {
                 await new Promise(resolve => setTimeout(resolve, 2000));
             }
 
         } catch (error) {
             console.error(`Batch ${i} failed`, error);
-            // Continue to next batch even if one fails
         }
     }
 
@@ -75,12 +60,10 @@ const App: React.FC = () => {
     setIsStreaming(false);
   }, [BATCHES]);
 
-  // Initial Load Effect
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
 
-    // 1. Load preferences
     const hasSeenOnboarding = localStorage.getItem('bytes_onboarded') === 'true';
     if (hasSeenOnboarding) setShowOnboarding(false);
     
@@ -90,18 +73,14 @@ const App: React.FC = () => {
       if (prefs.topics?.length > 0) setSelectedTopics(prefs.topics);
     }
     
-    // 2. Initialize with Static Data (Instant Paint)
     setNews(PAPERS.map(p => ({ ...p, isLiked: false, isSaved: false })));
 
-    // 3. Start the Stream automatically if onboarded
     if (hasSeenOnboarding) {
         setTimeout(startNewsStream, 1000);
     }
   }, [startNewsStream]);
 
-  // Handlers
   const handleRefresh = () => {
-    // Clear and restart
     setNews(PAPERS.map(p => ({ ...p, isLiked: false, isSaved: false })));
     feedRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     startNewsStream();
@@ -112,7 +91,6 @@ const App: React.FC = () => {
     setSelectedTopics(prefs.topics);
     localStorage.setItem('bytes_onboarded', 'true');
     localStorage.setItem('bytes_prefs', JSON.stringify(prefs));
-    // Start stream after onboarding
     startNewsStream();
   };
 
@@ -146,7 +124,7 @@ const App: React.FC = () => {
   }, [news, selectedTopics, searchTerm]);
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-black">
+    <div className="relative h-screen w-screen overflow-hidden bg-[#F2F1EC]">
       
       {showOnboarding ? (
         <Onboarding onComplete={handleOnboardingComplete} />
@@ -154,10 +132,10 @@ const App: React.FC = () => {
         <>
           <div 
             className={`
-              relative z-10 w-full h-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] bg-black
-              ${isDrawerOpen ? 'scale-90 opacity-80 blur-[1px]' : 'scale-100 opacity-100'}
+              relative z-10 w-full h-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] bg-[#F2F1EC]
+              ${isDrawerOpen ? 'scale-95 opacity-80 blur-[2px]' : 'scale-100 opacity-100'}
             `}
-            style={{ transformOrigin: 'center bottom' }}
+            style={{ transformOrigin: 'center center' }}
           >
             <Navbar 
                 onProfileClick={() => setIsDrawerOpen(true)}
@@ -167,10 +145,11 @@ const App: React.FC = () => {
                 isLiveLoading={isStreaming}
             />
 
-            {/* SNAP SCROLL CONTAINER - FULL SCREEN, NO PADDING */}
+            {/* FEED CONTAINER */}
+            {/* Added pt-24 to push content below navbar, ensuring floating feel */}
             <div 
                 ref={feedRef}
-                className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar"
+                className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar pt-20 md:pt-24"
             >
                 {filteredNews.length > 0 ? (
                   <>
@@ -184,33 +163,33 @@ const App: React.FC = () => {
                     ))}
                   </>
                 ) : (
-                    <div className="h-full w-full flex flex-col items-center justify-center text-center p-8 snap-center bg-gray-900">
-                        <h3 className="text-3xl font-serif-display font-bold text-white mb-2">No stories found.</h3>
+                    <div className="h-[70vh] w-full flex flex-col items-center justify-center text-center p-8 snap-center">
+                        <h3 className="text-3xl font-serif-display font-bold text-[#1C1C1E] mb-3">Quiet today.</h3>
+                        <p className="text-[#8E8E93] text-sm mb-8">Try adjusting your interests.</p>
                         <button 
                           onClick={() => setIsDrawerOpen(true)}
-                          className="mt-8 px-8 py-4 rounded-full bg-white text-black font-bold text-xs uppercase tracking-widest shadow-lg hover:scale-105 transition-transform"
+                          className="px-8 py-4 rounded-full bg-[#1C1C1E] text-white font-bold text-xs uppercase tracking-widest shadow-lg hover:scale-105 transition-transform"
                         >
-                          Adjust Filters
+                          Curate Feed
                         </button>
                     </div>
                 )}
 
-                {/* Live Stream Status Indicator - Snaps as the last item */}
-                <div className="h-[30vh] w-full flex flex-col items-center justify-center gap-3 transition-opacity duration-500 snap-center bg-black text-white">
+                {/* Status Indicator */}
+                <div className="h-[30vh] w-full flex flex-col items-center justify-start pt-12 gap-3 transition-opacity duration-500 snap-center pb-20">
                     {isStreaming ? (
                         <>
-                             <div className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
-                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">{streamStatus}</span>
+                             <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 bg-[#1C1C1E] rounded-full animate-pulse"></span>
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8E8E93]">Syncing global wire</span>
                             </div>
-                            {/* Animated bar */}
-                            <div className="w-32 h-0.5 bg-gray-800 rounded-full overflow-hidden">
-                                <div className="h-full bg-red-600 animate-progress-indeterminate"></div>
+                            <div className="w-24 h-1 bg-[#E5E5EA] rounded-full overflow-hidden">
+                                <div className="h-full bg-[#1C1C1E] animate-progress-indeterminate"></div>
                             </div>
                         </>
                     ) : (
-                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
-                             Feed Up to Date
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D1D1D6]">
+                             All Caught Up
                         </span>
                     )}
                 </div>

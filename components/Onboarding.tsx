@@ -37,7 +37,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     setIsExiting(true);
     setTimeout(() => {
         onComplete(prefs);
-    }, 800); // Allow exit animation to play
+    }, 800);
   };
 
   useEffect(() => {
@@ -48,61 +48,59 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   }, [step]);
 
   return (
-    <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-700 ${isExiting ? 'opacity-0' : 'opacity-100'}`}>
+    <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-[#F2F1EC] transition-opacity duration-700 ${isExiting ? 'opacity-0' : 'opacity-100'}`}>
       
-      {/* 1. VIBRANT NEON BACKGROUND (Deep Indigo, not Black) */}
-      <div className="absolute inset-0 bg-indigo-950">
-        {/* Animated Gradient Orbs */}
-        <div className="absolute top-[-20%] left-[-10%] w-[80vw] h-[80vw] bg-fuchsia-600/40 rounded-full blur-[100px] animate-pulse mix-blend-screen" style={{ animationDuration: '4s' }}></div>
-        <div className="absolute bottom-[-20%] right-[-10%] w-[80vw] h-[80vw] bg-cyan-500/40 rounded-full blur-[100px] animate-pulse mix-blend-screen" style={{ animationDuration: '7s' }}></div>
-        <div className="absolute top-[40%] left-[30%] w-[60vw] h-[60vw] bg-violet-600/40 rounded-full blur-[120px] animate-pulse mix-blend-screen" style={{ animationDuration: '10s' }}></div>
-        
-        {/* Grid Overlay for Synthwave feel */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_100%)]"></div>
+      {/* 1. Background Visuals (Subtle Blobs) */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+          <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-white rounded-full blur-[80px] opacity-70"></div>
+          <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-[#E5E4DE] rounded-full blur-[60px] opacity-50"></div>
       </div>
 
-      {/* 2. MAIN CARD */}
-      <div className="relative z-10 w-full max-w-lg mx-4">
+      {/* 2. Main Floating Card */}
+      <div className="relative z-10 w-full max-w-md mx-6">
         
-        {/* Glass Container with Neon Glow Border */}
-        <div className="relative bg-white/5 backdrop-blur-2xl border border-white/20 rounded-[40px] p-8 md:p-12 shadow-[0_0_50px_-10px_rgba(167,139,250,0.3)] overflow-hidden">
+        {/* Card Body */}
+        <div className="bg-white rounded-[40px] soft-depth-card p-8 md:p-12 transition-all duration-500 animate-fade-in-up">
             
-            {/* Top Shine Effect */}
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-50"></div>
-
-            {/* Step 1: Welcome */}
+            {/* Step 1: Welcome / "Get Started" */}
             {step === 1 && (
-                <div className="flex flex-col items-center text-center animate-float-up">
-                    <div className="w-24 h-24 mb-8 rounded-full bg-gradient-to-tr from-cyan-400 to-fuchsia-500 p-[2px] shadow-[0_0_30px_rgba(232,121,249,0.5)]">
-                        <div className="w-full h-full rounded-full bg-indigo-950 flex items-center justify-center">
-                            <span className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 to-fuchsia-500">B</span>
-                        </div>
+                <div className="flex flex-col items-center text-center">
+                    <div className="w-20 h-20 mb-8 flex items-center justify-center bg-[#1C1C1E] text-white rounded-3xl shadow-xl transform -rotate-3">
+                         <span className="font-serif-display text-4xl font-bold">V</span>
                     </div>
                     
-                    <h1 className="text-5xl font-bold text-white mb-4 tracking-tight drop-shadow-lg">
-                        Bytes<span className="text-cyan-400">.</span>
+                    <h1 className="text-4xl font-serif-display font-bold text-[#1C1C1E] mb-3 tracking-tight">
+                        Volv.
                     </h1>
-                    <p className="text-lg text-indigo-200 mb-10 font-medium leading-relaxed">
-                        The future of news is <span className="text-cyan-300 font-bold drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">fast</span>, <span className="text-fuchsia-300 font-bold drop-shadow-[0_0_10px_rgba(232,121,249,0.5)]">focused</span>, and <span className="text-white font-bold">yours</span>.
+                    <p className="text-[#8E8E93] mb-10 font-sans text-sm leading-relaxed max-w-xs mx-auto">
+                        Intelligent news, distilled for the modern mind. Experience clarity in 9 seconds.
                     </p>
 
-                    <button 
-                        onClick={handleNext}
-                        className="group relative px-10 py-4 bg-transparent overflow-hidden rounded-full transition-all hover:scale-105"
-                    >
-                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-cyan-500 via-fuchsia-500 to-cyan-500 animate-gradient-x opacity-80 group-hover:opacity-100"></div>
-                        <span className="relative z-10 font-bold text-white uppercase tracking-[0.2em] text-sm">Initialize System</span>
-                    </button>
+                    <div className="w-full space-y-3">
+                        <button 
+                            onClick={handleNext}
+                            className="w-full py-4 bg-[#1C1C1E] text-white rounded-full font-bold text-xs uppercase tracking-widest shadow-lg hover:bg-black transition-all hover:scale-[1.02]"
+                        >
+                            Get Started
+                        </button>
+                        <button className="w-full py-4 bg-[#F2F1EC] text-[#1C1C1E] rounded-full font-bold text-xs uppercase tracking-widest hover:bg-[#E5E4DE] transition-colors">
+                            Log In
+                        </button>
+                    </div>
+                    
+                    <p className="mt-8 text-[10px] text-gray-400">By continuing you agree to our Terms.</p>
                 </div>
             )}
 
-            {/* Step 2: Topics (Neon Selection) */}
+            {/* Step 2: Topics Selection */}
             {step === 2 && (
-                <div className="animate-float-up">
-                    <h2 className="text-3xl font-bold text-white mb-2 text-center">Data Streams</h2>
-                    <p className="text-indigo-300 text-xs font-bold uppercase tracking-widest text-center mb-8">Select 3+ Interest Vectors</p>
+                <div className="flex flex-col h-full">
+                    <div className="text-center mb-8">
+                        <h2 className="text-2xl font-serif-display font-bold text-[#1C1C1E] mb-2">Your Interests</h2>
+                        <p className="text-[#8E8E93] text-xs font-medium">Select 3 topics to tailor your feed</p>
+                    </div>
 
-                    <div className="flex flex-wrap gap-3 justify-center mb-10">
+                    <div className="flex flex-wrap gap-2.5 justify-center mb-10">
                         {topicsList.map(t => {
                             const isSelected = prefs.topics.includes(t);
                             return (
@@ -110,10 +108,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                                     key={t}
                                     onClick={() => toggleTopic(t)}
                                     className={`
-                                        relative px-5 py-3 rounded-xl text-sm font-bold transition-all duration-300 border
+                                        px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 border
                                         ${isSelected 
-                                            ? 'bg-cyan-400 border-cyan-400 text-indigo-950 shadow-[0_0_20px_rgba(34,211,238,0.6)] scale-105' 
-                                            : 'bg-white/5 border-white/10 text-indigo-200 hover:bg-white/10 hover:border-white/30'}
+                                            ? 'bg-[#1C1C1E] text-white border-[#1C1C1E] shadow-md transform scale-105' 
+                                            : 'bg-white border-[#E5E5EA] text-[#505055] hover:border-[#D1D1D6] hover:bg-[#F9F9F7]'}
                                     `}
                                 >
                                     {t}
@@ -125,21 +123,23 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                     <button 
                         onClick={handleNext}
                         disabled={prefs.topics.length < 3}
-                        className="w-full py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all disabled:opacity-50 disabled:grayscale
-                        bg-gradient-to-r from-fuchsia-600 to-violet-600 text-white shadow-[0_0_30px_rgba(192,38,211,0.4)] hover:shadow-[0_0_50px_rgba(192,38,211,0.6)] hover:scale-[1.02]"
+                        className="w-full py-4 rounded-full font-bold text-xs uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed
+                        bg-[#1C1C1E] text-white shadow-lg hover:shadow-xl hover:scale-[1.01]"
                     >
-                        Confirm Vectors
+                        Continue
                     </button>
                 </div>
             )}
 
-            {/* Step 3: Density */}
+            {/* Step 3: Density Preference */}
             {step === 3 && (
-                <div className="animate-float-up">
-                    <h2 className="text-3xl font-bold text-white mb-2 text-center">Resolution</h2>
-                    <p className="text-indigo-300 text-xs font-bold uppercase tracking-widest text-center mb-8">Select Information Density</p>
+                <div>
+                     <div className="text-center mb-8">
+                        <h2 className="text-2xl font-serif-display font-bold text-[#1C1C1E] mb-2">Reading Style</h2>
+                        <p className="text-[#8E8E93] text-xs font-medium">How much depth do you need today?</p>
+                    </div>
 
-                    <div className="space-y-4 mb-10">
+                    <div className="space-y-3 mb-10">
                         {['Ultra quick (10s)', 'Brief summaries', 'Deep dives'].map(style => {
                             const val = style.split(' (')[0];
                             const isSelected = prefs.readingStyle === val;
@@ -148,18 +148,18 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                                     key={style}
                                     onClick={() => { setPrefs(p => ({...p, readingStyle: val as any})); handleNext(); }}
                                     className={`
-                                        w-full p-6 flex justify-between items-center text-left transition-all border rounded-2xl group
+                                        w-full p-5 flex justify-between items-center text-left transition-all border rounded-[24px]
                                         ${isSelected 
-                                            ? 'bg-fuchsia-500/20 border-fuchsia-500 text-white shadow-[0_0_20px_rgba(232,121,249,0.2)]' 
-                                            : 'bg-white/5 border-white/10 text-indigo-200 hover:bg-white/10 hover:border-white/30'}
+                                            ? 'bg-[#F9F9F7] border-[#1C1C1E] shadow-sm' 
+                                            : 'bg-white border-[#E5E5EA] hover:bg-[#F9F9F7] hover:border-[#D1D1D6]'}
                                     `}
                                 >
-                                    <span className="font-bold text-lg">{style}</span>
+                                    <span className={`font-bold text-base ${isSelected ? 'text-[#1C1C1E]' : 'text-[#505055]'}`}>{style}</span>
                                     <div className={`
-                                        w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors
-                                        ${isSelected ? 'border-fuchsia-400 bg-fuchsia-400' : 'border-white/30 group-hover:border-white/60'}
+                                        w-5 h-5 rounded-full border flex items-center justify-center transition-colors
+                                        ${isSelected ? 'border-[#1C1C1E] bg-[#1C1C1E]' : 'border-[#C7C7CC]'}
                                     `}>
-                                        {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
+                                        {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                                     </div>
                                 </button>
                             );
@@ -168,57 +168,37 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                 </div>
             )}
 
-            {/* Step 4: Loading / Synthesis */}
+            {/* Step 4: Personalization Spinner */}
             {step === 4 && (
-                <div className="flex flex-col items-center justify-center py-12 animate-float-up">
-                    <div className="relative w-24 h-24 mb-8">
-                        {/* Spinning Neon Rings */}
-                        <div className="absolute inset-0 border-4 border-white/10 rounded-full"></div>
-                        <div className="absolute inset-0 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-                        <div className="absolute inset-2 border-4 border-fuchsia-500 border-b-transparent rounded-full animate-spin-reverse"></div>
+                <div className="flex flex-col items-center justify-center py-12">
+                    <div className="relative w-16 h-16 mb-8">
+                        <svg className="animate-spin w-full h-full text-[#1C1C1E]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
                     </div>
                     
-                    <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Synthesizing Feed</h2>
-                    <div className="flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"></span>
-                        <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce delay-100"></span>
-                        <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce delay-200"></span>
-                    </div>
+                    <h2 className="text-xl font-serif-display font-bold text-[#1C1C1E] mb-2">Curating Feed</h2>
+                    <p className="text-xs text-[#8E8E93] uppercase tracking-widest animate-pulse">Designing your experience...</p>
                 </div>
             )}
 
         </div>
         
-        {/* Footer Text */}
-        <div className="text-center mt-6 opacity-60">
-             <p className="text-[10px] text-indigo-300 uppercase tracking-widest">Powered by Gemini 2.5</p>
+        {/* Footer Branding */}
+        <div className="text-center mt-8">
+             <p className="text-[9px] text-[#C7C7CC] uppercase tracking-[0.2em] font-bold">Powered by Gemini</p>
         </div>
 
       </div>
 
       <style>{`
-        @keyframes spin-reverse {
-          from { transform: rotate(360deg); }
-          to { transform: rotate(0deg); }
+        @keyframes fade-in-up {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        .animate-spin-reverse {
-          animation: spin-reverse 1s linear infinite;
-        }
-        @keyframes gradient-x {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        .animate-gradient-x {
-            background-size: 200% 200%;
-            animation: gradient-x 3s ease infinite;
-        }
-        @keyframes float-up {
-          from { transform: translateY(20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        .animate-float-up {
-          animation: float-up 0.4s ease-out forwards;
+        .animate-fade-in-up {
+          animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
       `}</style>
     </div>
