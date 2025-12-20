@@ -1,8 +1,8 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-
 
 import { GoogleGenAI } from "@google/genai";
 import { PAPERS } from '../constants';
@@ -22,7 +22,6 @@ const getSystemInstruction = () => {
   Answer user questions about these stories, global development trends, impact investing, or charitable strategies.`;
 };
 
-// Helper to get an image based on category
 const getCategoryImageUrl = (category: string): string => {
   const map: Record<string, string> = {
     'Business': 'photo-1611974765270-ca12586343bb',
@@ -35,18 +34,16 @@ const getCategoryImageUrl = (category: string): string => {
     'Politics': 'photo-1529101091760-61df6be5d187',
   };
   const key = Object.keys(map).find(k => category.includes(k)) || 'World';
-  const imgId = map[key] || 'photo-1504711434969-e33886168f5c'; // default newsy bg
+  const imgId = map[key] || 'photo-1504711434969-e33886168f5c';
   return `https://images.unsplash.com/${imgId}?auto=format&fit=crop&q=80&w=1200`;
 };
 
 export const sendMessageToGemini = async (history: {role: string, text: string}[], newMessage: string): Promise<string> => {
   try {
     if (!process.env.API_KEY) return "Missing API Key.";
-
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: [
         ...history.map(h => ({
           role: h.role === 'model' ? 'model' : 'user',
@@ -54,151 +51,187 @@ export const sendMessageToGemini = async (history: {role: string, text: string}[
         })),
         { role: 'user', parts: [{ text: newMessage }] }
       ],
-      config: {
-        systemInstruction: getSystemInstruction(),
-      }
+      config: { systemInstruction: getSystemInstruction() }
     });
-
     return response.text || "No response.";
-
   } catch (error) {
     console.error("Gemini API Error:", error);
     return "Service unavailable.";
   }
 };
 
-// Fallback generator when API quota is hit
 const generateFallbackNews = (topicString: string): Byte[] => {
-    const topics = topicString.split(',');
-    const mainTopic = topics[0] || 'Global';
-    
     return [
         {
-            id: `fallback-${Date.now()}-1`,
-            title: `Latest Updates in ${mainTopic}`,
-            publisher: "Volv System",
+            id: `fallback-${Date.now()}`,
+            title: `Latest on ${topicString.split(',')[0]}`,
+            publisher: "Volv Wire",
             authors: ["AI Curator"],
-            abstract: `We are experiencing high traffic on our live feed. This is a placeholder for real-time coverage on ${mainTopic} while we reconnect to the global news stream.`,
-            category: mainTopic,
+            abstract: "We are currently syncing with global sources. Live updates for this topic will resume shortly.",
+            category: "World",
             readTime: "1 min",
-            fileUrl: getCategoryImageUrl(mainTopic),
-            likes: 100 + Math.floor(Math.random() * 500),
-            comments: Math.floor(Math.random() * 50),
-            publicationDate: "Just now",
+            fileUrl: getCategoryImageUrl("World"),
+            likes: 150,
+            comments: 5,
+            publicationDate: "Now",
             isLiked: false,
-            isSaved: false
-        },
-        {
-            id: `fallback-${Date.now()}-2`,
-            title: `Market Analysis: ${mainTopic} Trends`,
-            publisher: "Market Watch",
-            authors: ["System"],
-            abstract: `Key indicators suggest significant movement in the ${mainTopic} sector. Analysts are watching regulatory developments closely as new data emerges.`,
-            category: "Finance",
-            readTime: "2 min",
-            fileUrl: getCategoryImageUrl('Finance'),
-            likes: 200 + Math.floor(Math.random() * 200),
-            comments: Math.floor(Math.random() * 30),
-            publicationDate: "1h ago",
-            isLiked: false,
-            isSaved: false
+            isSaved: false,
+            sourceUrl: `https://news.google.com/search?q=${encodeURIComponent(topicString)}`
         }
     ];
 };
 
 /**
- * Fetches real-time news using Google Search Grounding.
+ * Intelligent Deep-Link Matcher
+ * Analyzes search results to find the specific article URL that matches the generated headline.
  */
+const findBestVerifiedLink = (headline: string, publisher: string, groundingChunks: any[]) => {
+  if (!groundingChunks || groundingChunks.length === 0) return null;
+
+  const hNorm = headline.toLowerCase().replace(/[^\w\s]/g, '');
+  const pNorm = publisher.toLowerCase().replace(/[^\w\s]/g, '');
+  const hWords = hNorm.split(/\s+/).filter(w => w.length > 3);
+
+  const scoredResults = groundingChunks
+    .filter(chunk => chunk.web && chunk.web.uri)
+    .map(chunk => {
+        const cTitle = (chunk.web.title || "").toLowerCase();
+        const cUri = chunk.web.uri.toLowerCase();
+        let score = 0;
+
+        // 1. Semantic Title Match (Headline words present in Source Title)
+        let matchCount = 0;
+        hWords.forEach(w => {
+            if (cTitle.includes(w)) matchCount++;
+        });
+        if (hWords.length > 0) {
+            score += (matchCount / hWords.length) * 100;
+        }
+
+        // 2. Publisher Identity Match
+        if (cTitle.includes(pNorm) || cUri.includes(pNorm.replace(/\s+/g, ''))) {
+            score += 40;
+        }
+
+        // 3. Deep Link Structural Validation
+        try {
+            const url = new URL(chunk.web.uri);
+            const path = url.pathname;
+            // Reward paths that look like articles (e.g. /2024/05/title, /article/123)
+            // Penalize root paths (e.g. /, /index.html)
+            if (path.length > 1 && path.split('/').length > 2) {
+                score += 30;
+            }
+            if (path === '/' || path === '' || path === '/index.html') {
+                score -= 100;
+            }
+        } catch {
+            score -= 50;
+        }
+
+        return { uri: chunk.web.uri, score };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  // Return the highest scoring result if it's a decent match
+  return scoredResults[0] && scoredResults[0].score > 40 ? scoredResults[0].uri : null;
+};
+
 export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
-  if (!process.env.API_KEY) {
-    console.warn("No API Key found for live news");
-    return [];
-  }
+  if (!process.env.API_KEY) return [];
 
   const topicString = topics.length > 0 ? topics.join(', ') : 'Global Breaking News';
   
-  // OPTIMIZATION: Reduced count to 4 to save tokens and prevent timeouts/quota limits
+  // Prompt optimized for extraction and precision
   const prompt = `
-    Find 4 breaking news stories about: ${topicString}.
+    Use Google Search to find 4 recent, specific breaking news stories about: ${topicString}.
     
-    CRITICAL: List strictly valid JSON objects. No markdown.
-    Fields:
-    - "title": Headline (<10 words).
-    - "publisher": Source name.
-    - "abstract": Summary (20-30 words).
-    - "category": Topic (e.g. World, Tech).
-    - "sourceUrl": Link.
+    For each story, you MUST identify the direct article URL.
+    RULES:
+    1. The URL must be a "Deep Link" (e.g. site.com/article-title), NOT a homepage (site.com).
+    2. If a specific link isn't found, skip that story.
     
-    Output strictly a JSON array.
+    Output strictly as a JSON array:
+    [
+      {
+        "title": "Exact headline",
+        "publisher": "Source Name",
+        "abstract": "Concise summary (max 30 words)",
+        "category": "Topic",
+        "sourceUrl": "The deep link found in search"
+      }
+    ]
   `;
 
-  // Internal function to handle retries
-  const generate = async (retryCount = 0): Promise<any> => {
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      return await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-          tools: [{ googleSearch: {} }],
-        },
-      });
-    } catch (error: any) {
-      // Retry logic for 429
-      if ((error.status === 429 || error.message?.includes('429') || error.message?.includes('RESOURCE_EXHAUSTED')) && retryCount < 1) {
-         // Increase delay to 4 seconds to clear rate limit
-         const delay = 4000;
-         await new Promise(resolve => setTimeout(resolve, delay));
-         return generate(retryCount + 1);
-      }
-      throw error;
-    }
-  };
-
   try {
-    const response = await generate();
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      config: { 
+        tools: [{ googleSearch: {} }],
+      },
+    });
 
-    let text = response.text || "";
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    let text = response.text || "[]";
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (jsonMatch) text = jsonMatch[0];
 
-    if (text.startsWith('[') && !text.endsWith(']')) {
-       const lastClosingBrace = text.lastIndexOf('}');
-       if (lastClosingBrace !== -1) {
-          text = text.substring(0, lastClosingBrace + 1) + ']';
-       }
+    let rawData;
+    try {
+        rawData = JSON.parse(text);
+    } catch (e) {
+        return generateFallbackNews(topicString);
     }
 
-    const rawData = JSON.parse(text);
-    
     if (!Array.isArray(rawData)) return generateFallbackNews(topicString);
+
+    const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
 
     return rawData.map((item: any) => {
       const cat = item.category || "World";
+      
+      // 1. First, try to find a verified deep link from the actual search metadata
+      let finalUrl = findBestVerifiedLink(item.title, item.publisher, groundingChunks);
+      
+      // 2. If no verified link found, check if the model provided a valid deep link manually
+      if (!finalUrl && item.sourceUrl) {
+          try {
+              const u = new URL(item.sourceUrl);
+              const path = u.pathname.replace(/\/$/, "");
+              // Only accept if it looks like a deep link
+              if (path.length > 5 && !path.includes('home')) {
+                  finalUrl = item.sourceUrl;
+              }
+          } catch {}
+      }
+
+      // 3. Fallback: Create a specific Google News search link
+      // This is better than a broken link or a generic homepage
+      if (!finalUrl) {
+          finalUrl = `https://www.google.com/search?q=${encodeURIComponent(item.title)}&tbm=nws`;
+      }
+
       return {
-        id: `live-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        title: item.title || "Breaking News",
+        id: `live-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        title: item.title || "News Update",
         publisher: item.publisher || "Global Wire",
         authors: ["AI Curator"],
-        abstract: item.abstract || "No summary available.",
+        abstract: item.abstract || "Full details available at the source.",
         category: cat,
         readTime: "1 min read",
         fileUrl: getCategoryImageUrl(cat),
-        likes: Math.floor(Math.random() * 500),
+        likes: Math.floor(Math.random() * 500 + 100),
         comments: Math.floor(Math.random() * 50),
         isLiked: false,
         isSaved: false,
-        publicationDate: "LIVE",
-        sourceUrl: item.sourceUrl
+        publicationDate: "JUST NOW",
+        sourceUrl: finalUrl
       } as Byte;
     });
 
-  } catch (e: any) {
-    // If Quota Exceeded, FAIL SILENTLY and return fallback data
-    // This ensures the app never crashes or shows an error state to the user
-    if (e.message?.includes('429') || e.status === 429 || e.message?.includes('quota')) {
-      return generateFallbackNews(topicString);
-    }
+  } catch (e) {
     console.error("Gemini Fetch Error:", e);
-    return [];
+    return generateFallbackNews(topicString);
   }
 };

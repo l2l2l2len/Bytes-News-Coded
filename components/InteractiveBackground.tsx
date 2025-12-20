@@ -1,8 +1,9 @@
+
 import React from 'react';
 
 const InteractiveBackground: React.FC = () => {
   return (
-    <div className="fixed inset-0 z-0 overflow-hidden bg-[#fff1f2]">
+    <div className="fixed inset-0 z-0 overflow-hidden bg-[#fff1f2] h-[100dvh]">
       
       {/* 1. Soft Light Gradient Base */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#fff1f2] via-[#ffe4e6] to-[#fce7f3] opacity-80"></div>
@@ -68,7 +69,6 @@ const InteractiveBackground: React.FC = () => {
             background-size: 80px 80px;
             transform: rotateX(75deg);
             animation: grid-scroll 4s linear infinite;
-            /* Fade out into distance */
             mask-image: linear-gradient(to bottom, transparent 0%, black 40%);
             -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 40%);
         }
@@ -90,7 +90,7 @@ const InteractiveBackground: React.FC = () => {
             transition: all 0.5s ease;
         }
 
-        /* Tile Positioning & Animation */
+        /* Default Desktop Positions */
         .tile-1 { 
             top: 25%; left: 15%; width: 140px; height: 140px; 
             animation: float-1 12s ease-in-out infinite; 
@@ -106,6 +106,22 @@ const InteractiveBackground: React.FC = () => {
         .tile-4 { 
             top: 60%; right: 10%; width: 60px; height: 60px; 
             animation: float-4 10s ease-in-out infinite; 
+        }
+
+        /* Mobile Optimization: Adjust positions to stay in view */
+        @media (max-width: 768px) {
+            .tile-1 {
+                top: 20%; left: 5%; width: 100px; height: 100px;
+            }
+            .tile-2 {
+                top: 10%; right: 5%; width: 70px; height: 70px;
+            }
+            .tile-3 {
+                bottom: 30%; left: 50%; transform: translateX(-50%); width: 140px; height: 140px;
+            }
+            .tile-4 {
+                top: 55%; right: 5%; width: 50px; height: 50px;
+            }
         }
 
         @keyframes grid-scroll {
