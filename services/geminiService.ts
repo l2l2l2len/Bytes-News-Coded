@@ -64,10 +64,10 @@ const generateFallbackNews = (topicString: string): Byte[] => {
     return [
         {
             id: `fallback-${Date.now()}`,
-            title: `Latest on ${topicString.split(',')[0]}`,
+            title: `Latest Updates: ${topicString.split(',')[0]}`,
             publisher: "Volv Wire",
             authors: ["AI Curator"],
-            abstract: "We are currently syncing with global sources. Live updates for this topic will resume shortly.",
+            abstract: "We are currently syncing with global sources to bring you the most accurate real-time coverage.",
             category: "World",
             readTime: "1 min",
             fileUrl: getCategoryImageUrl("World"),
@@ -76,7 +76,7 @@ const generateFallbackNews = (topicString: string): Byte[] => {
             publicationDate: "Now",
             isLiked: false,
             isSaved: false,
-            sourceUrl: `https://news.google.com/search?q=${encodeURIComponent(topicString)}`
+            sourceUrl: `https://www.google.com/search?q=${encodeURIComponent(topicString)}&tbm=nws`
         }
     ];
 };
@@ -84,6 +84,7 @@ const generateFallbackNews = (topicString: string): Byte[] => {
 /**
  * Intelligent Deep-Link Matcher
  * Analyzes search results to find the specific article URL that matches the generated headline.
+ * STRICT MODE: Only returns a URL if it matches the content, otherwise returns null.
  */
 const findBestVerifiedLink = (headline: string, publisher: string, groundingChunks: any[]) => {
   if (!groundingChunks || groundingChunks.length === 0) return null;
@@ -122,19 +123,20 @@ const findBestVerifiedLink = (headline: string, publisher: string, groundingChun
             if (path.length > 1 && path.split('/').length > 2) {
                 score += 30;
             }
-            if (path === '/' || path === '' || path === '/index.html') {
-                score -= 100;
+            if (path === '/' || path === '' || path === '/index.html' || path.includes('login') || path.includes('subscribe')) {
+                score -= 200; // Nuclear penalty for non-content pages
             }
         } catch {
-            score -= 50;
+            score -= 200;
         }
 
         return { uri: chunk.web.uri, score };
     })
     .sort((a, b) => b.score - a.score);
 
-  // Return the highest scoring result if it's a decent match
-  return scoredResults[0] && scoredResults[0].score > 40 ? scoredResults[0].uri : null;
+  // High threshold to ensure we don't return garbage links. 
+  // It's better to fallback to a search page than to send a user to a random wrong article.
+  return scoredResults[0] && scoredResults[0].score > 50 ? scoredResults[0].uri : null;
 };
 
 export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
@@ -142,14 +144,10 @@ export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
 
   const topicString = topics.length > 0 ? topics.join(', ') : 'Global Breaking News';
   
-  // Prompt optimized for extraction and precision
   const prompt = `
-    Use Google Search to find 4 recent, specific breaking news stories about: ${topicString}.
+    Find 4 specific, breaking news stories about: ${topicString}.
     
-    For each story, you MUST identify the direct article URL.
-    RULES:
-    1. The URL must be a "Deep Link" (e.g. site.com/article-title), NOT a homepage (site.com).
-    2. If a specific link isn't found, skip that story.
+    CRITICAL: Provide the most recent developments.
     
     Output strictly as a JSON array:
     [
@@ -157,8 +155,7 @@ export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
         "title": "Exact headline",
         "publisher": "Source Name",
         "abstract": "Concise summary (max 30 words)",
-        "category": "Topic",
-        "sourceUrl": "The deep link found in search"
+        "category": "Topic"
       }
     ]
   `;
@@ -191,25 +188,14 @@ export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
     return rawData.map((item: any) => {
       const cat = item.category || "World";
       
-      // 1. First, try to find a verified deep link from the actual search metadata
+      // 1. Try to find a verified deep link from the actual search metadata
+      // This is the ONLY way we accept a direct link. We do not trust the model's hallucinated URLs.
       let finalUrl = findBestVerifiedLink(item.title, item.publisher, groundingChunks);
       
-      // 2. If no verified link found, check if the model provided a valid deep link manually
-      if (!finalUrl && item.sourceUrl) {
-          try {
-              const u = new URL(item.sourceUrl);
-              const path = u.pathname.replace(/\/$/, "");
-              // Only accept if it looks like a deep link
-              if (path.length > 5 && !path.includes('home')) {
-                  finalUrl = item.sourceUrl;
-              }
-          } catch {}
-      }
-
-      // 3. Fallback: Create a specific Google News search link
-      // This is better than a broken link or a generic homepage
+      // 2. Fallback: Create a specific Google News search link
+      // This guarantees the user never hits a 404 page. It sends them to a live search for that specific story.
       if (!finalUrl) {
-          finalUrl = `https://www.google.com/search?q=${encodeURIComponent(item.title)}&tbm=nws`;
+          finalUrl = `https://www.google.com/search?q=${encodeURIComponent(item.title + " " + item.publisher)}&tbm=nws`;
       }
 
       return {

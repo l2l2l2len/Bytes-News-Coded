@@ -108,19 +108,23 @@ const InteractiveBackground: React.FC = () => {
             animation: float-4 10s ease-in-out infinite; 
         }
 
-        /* Mobile Optimization: Adjust positions to stay in view */
+        /* Mobile Optimization: Precise percentages to keep elements in viewport */
         @media (max-width: 768px) {
             .tile-1 {
-                top: 20%; left: 5%; width: 100px; height: 100px;
+                top: 18%; left: 8%; width: 100px; height: 100px;
             }
             .tile-2 {
-                top: 10%; right: 5%; width: 70px; height: 70px;
+                top: 12%; right: 8%; width: 70px; height: 70px;
             }
             .tile-3 {
-                bottom: 30%; left: 50%; transform: translateX(-50%); width: 140px; height: 140px;
+                /* Centered lower tile */
+                bottom: 25%; left: 50%; 
+                transform: translateX(-50%); 
+                width: 130px; height: 130px;
+                animation: float-3 18s ease-in-out infinite; /* Keep animation, handle transform separately if needed, but simple float works */
             }
             .tile-4 {
-                top: 55%; right: 5%; width: 50px; height: 50px;
+                top: 50%; right: 8%; width: 50px; height: 50px;
             }
         }
 
