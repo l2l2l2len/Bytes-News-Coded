@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { UserPreferences } from '../types';
 
@@ -76,9 +77,6 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                             className="w-full py-4 bg-[#831843] text-white rounded-full font-bold text-xs uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-transform"
                         >
                             Get Started
-                        </button>
-                        <button className="w-full py-4 bg-white text-[#831843] border border-rose-200 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-rose-50 transition-colors">
-                            Log In
                         </button>
                     </div>
                     
