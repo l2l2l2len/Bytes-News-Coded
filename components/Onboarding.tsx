@@ -179,7 +179,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         
         {/* Footer Branding */}
         <div className="text-center mt-8">
-             <p className="text-[9px] text-[#4a044e]/40 uppercase tracking-[0.2em] font-bold">Powered by Gemini</p>
+             <p className="text-[9px] text-[#4a044e]/40 uppercase tracking-[0.2em] font-bold">Powered by Silvercrest Creative Studio</p>
         </div>
 
       </div>
