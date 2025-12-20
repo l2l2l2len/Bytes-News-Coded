@@ -65,7 +65,7 @@ const generateFallbackNews = (topicString: string): Byte[] => {
         {
             id: `fallback-${Date.now()}`,
             title: `Latest Updates: ${topicString.split(',')[0]}`,
-            publisher: "Volv Wire",
+            publisher: "Bytes Wire",
             authors: ["AI Curator"],
             abstract: "We are currently syncing with global sources to bring you the most accurate real-time coverage.",
             category: "World",
@@ -144,18 +144,23 @@ export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
 
   const topicString = topics.length > 0 ? topics.join(', ') : 'Global Breaking News';
   
+  // Prompt optimized for high throughput (6 items) and high accuracy
   const prompt = `
-    Find 4 specific, breaking news stories about: ${topicString}.
-    
-    CRITICAL: Provide the most recent developments.
-    
-    Output strictly as a JSON array:
+    Find 6 distinct, high-impact breaking news stories related to: ${topicString}.
+
+    CRITICAL REQUIREMENTS:
+    1. Events must be from the last 24 hours.
+    2. Verify facts against multiple sources.
+    3. Avoid duplicate stories.
+    4. PRIORITIZE FACTUAL ACCURACY over sensationalism.
+
+    Output strictly as a valid JSON array:
     [
       {
-        "title": "Exact headline",
+        "title": "Concise Headline",
         "publisher": "Source Name",
-        "abstract": "Concise summary (max 30 words)",
-        "category": "Topic"
+        "abstract": "Compelling summary (max 35 words)",
+        "category": "Category Name"
       }
     ]
   `;

@@ -1,12 +1,13 @@
+
 import { Byte } from './types';
 
-export const BRAND_NAME = 'Volv';
+export const BRAND_NAME = 'Bytes';
 
 export const PAPERS: Byte[] = [
   {
     id: "byte-001",
     title: "Musk would almost be an instant trillionaire from giant SpaceX IPO",
-    publisher: "Volv World",
+    publisher: "Bytes World",
     authors: ["Editorial Team"],
     abstract: "Elon Musk's fortune could soar to $952B if SpaceX goes public at a $1.5T valuation next year, more than doubling his current $460B wealth. His stake alone would jump from $136B to over $625B, rivaling the scale of Saudi Aramco's historic IPO. SpaceX is already exploring employee share sales at an $800B valuation, while Musk's xAI has hit $200B—another path toward becoming the world's first trillionaire.",
     publicationDate: "DEC 10",
