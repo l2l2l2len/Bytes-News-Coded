@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 /**
@@ -39,6 +40,7 @@ export interface JournalArticle {
 }
 
 export interface UserPreferences {
+  userName?: string;
   topics: string[];
   readingStyle: 'Ultra quick' | 'Brief summaries' | 'Deep dives';
   tone: 'Straight facts' | 'More explanation' | 'Context & opinion';

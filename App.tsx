@@ -15,6 +15,7 @@ const App: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = useState<boolean>(true);
   const [selectedTopics, setSelectedTopics] = useState<string[]>(['US News', 'World', 'AI & Tech', 'Business', 'Science', 'Finance', 'Culture']);
   const [searchTerm, setSearchTerm] = useState('');
+  const [userName, setUserName] = useState('');
   
   // Streaming State
   const [streamStatus, setStreamStatus] = useState<string>(''); 
@@ -23,24 +24,44 @@ const App: React.FC = () => {
   const feedRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
 
-  // Optimized Speed Strategy: 5 focused micro-batches running in parallel.
-  // Smaller batches generate faster than large ones, populating the feed progressively.
-  const BATCHES = useMemo(() => [
-    ['Breaking News', 'Top Headlines'],
-    ['US Politics', 'Global Economy'],
-    ['Technology', 'Artificial Intelligence', 'Startups'],
-    ['Science', 'Health', 'Environment'],
-    ['Sports', 'Entertainment', 'Culture']
-  ], []);
+  // Dynamic Batch Generation based on User Topics
+  const getDynamicBatches = useCallback(() => {
+    // If user has minimal topics, use defaults + user topics
+    if (selectedTopics.length <= 3) {
+      return [
+        [...selectedTopics, 'Breaking News'],
+        ['Global Economy', 'World Politics'],
+        ['Technology', 'Science'],
+        ['Culture', 'Entertainment'],
+        ['Sports', 'Health']
+      ];
+    }
+
+    // Split user selected topics into chunks for parallel processing
+    const chunks: string[][] = [];
+    const chunkSize = Math.ceil(selectedTopics.length / 5);
+    for (let i = 0; i < selectedTopics.length; i += chunkSize) {
+        chunks.push(selectedTopics.slice(i, i + chunkSize));
+    }
+    
+    // Ensure we have at least 5 batches for speed consistency
+    while (chunks.length < 5) {
+        chunks.push(['Breaking News', 'Trending']);
+    }
+    
+    return chunks.slice(0, 5); // Limit to 5 parallel max
+  }, [selectedTopics]);
 
   const startNewsStream = useCallback(async () => {
     if (!process.env.API_KEY || isStreaming) return;
     
     setIsStreaming(true);
-    setStreamStatus('Initializing velocity wire...');
+    setStreamStatus(userName ? `Curating for ${userName}...` : 'Initializing velocity wire...');
+
+    const batches = getDynamicBatches();
 
     // Fire all 5 batches simultaneously
-    const fetchPromises = BATCHES.map(async (batchTopics, index) => {
+    const fetchPromises = batches.map(async (batchTopics, index) => {
         try {
             // Slight stagger (100ms) to prevent instant rate-limit clashes while keeping it fast
             await new Promise(r => setTimeout(r, index * 100)); 
@@ -62,29 +83,29 @@ const App: React.FC = () => {
 
     setStreamStatus('');
     setIsStreaming(false);
-  }, [BATCHES, isStreaming]);
+  }, [getDynamicBatches, isStreaming, userName]);
 
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
 
-    // Force Onboarding to show by not checking localStorage
-    
     const storedPrefs = localStorage.getItem('bytes_prefs');
     if (storedPrefs) {
       const prefs = JSON.parse(storedPrefs) as UserPreferences;
       if (prefs.topics?.length > 0) setSelectedTopics(prefs.topics);
+      if (prefs.userName) setUserName(prefs.userName);
+      setShowOnboarding(false); // Skip onboarding if prefs exist
+      setTimeout(() => startNewsStream(), 500); // Start stream slightly after mount
+    } else {
+        setShowOnboarding(true);
     }
     
     setNews(PAPERS.map(p => ({ ...p, isLiked: false, isSaved: false })));
-
-    // Removed auto-start of stream here, it triggers after onboarding completes
-  }, [startNewsStream]);
+  }, []); // Remove dependency on startNewsStream to avoid loops
 
   const handleRefresh = () => {
-    // Clear feed to show speed of new engine
     setNews([]); 
-    setStreamStatus('Rewiring feed...');
+    setStreamStatus(userName ? `Rewiring for ${userName}...` : 'Rewiring feed...');
     feedRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     startNewsStream();
   };
@@ -92,9 +113,13 @@ const App: React.FC = () => {
   const handleOnboardingComplete = (prefs: UserPreferences) => {
     setShowOnboarding(false);
     setSelectedTopics(prefs.topics);
+    if (prefs.userName) setUserName(prefs.userName);
+    
     localStorage.setItem('bytes_onboarded', 'true');
     localStorage.setItem('bytes_prefs', JSON.stringify(prefs));
-    startNewsStream();
+    
+    // Small delay to allow UI to transition before heavy network requests
+    setTimeout(() => startNewsStream(), 300);
   };
 
   const handleLike = (id: string) => {
@@ -110,9 +135,13 @@ const App: React.FC = () => {
   };
 
   const toggleTopic = (topic: string) => {
-    setSelectedTopics(prev => 
-      prev.includes(topic) ? prev.filter(t => t !== topic) : [...prev, topic]
-    );
+    setSelectedTopics(prev => {
+        const newTopics = prev.includes(topic) ? prev.filter(t => t !== topic) : [...prev, topic];
+        // Update local storage silently so prefs persist
+        const prefs = JSON.parse(localStorage.getItem('bytes_prefs') || '{}');
+        localStorage.setItem('bytes_prefs', JSON.stringify({...prefs, topics: newTopics}));
+        return newTopics;
+    });
   };
 
   const filteredNews = useMemo(() => {
@@ -143,6 +172,7 @@ const App: React.FC = () => {
                 onNotifyClick={() => {}}
                 onLiveClick={handleRefresh}
                 isLiveLoading={isStreaming}
+                userName={userName}
             />
 
             {/* FEED CONTAINER */}
@@ -184,7 +214,7 @@ const App: React.FC = () => {
                         <>
                              <div className="flex items-center gap-2">
                                 <span className="w-2 h-2 bg-[#be185d] rounded-full animate-pulse"></span>
-                                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Live Wire: {news.length}/40</span>
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Live Wire: {news.length} Loaded</span>
                             </div>
                             <div className="w-24 h-1 bg-[#831843]/10 rounded-full overflow-hidden">
                                 <div className="h-full bg-[#be185d] animate-progress-indeterminate"></div>

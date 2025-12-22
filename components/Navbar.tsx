@@ -7,15 +7,21 @@ interface NavbarProps {
   onNotifyClick: () => void;
   onLiveClick?: () => void;
   isLiveLoading?: boolean;
+  userName?: string;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onProfileClick, onSearchClick, onNotifyClick, onLiveClick, isLiveLoading }) => {
+const Navbar: React.FC<NavbarProps> = ({ onProfileClick, onSearchClick, onNotifyClick, onLiveClick, isLiveLoading, userName }) => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 px-4 md:px-6 py-4 md:py-6 flex justify-between items-center transition-all bg-gradient-to-b from-white/40 to-transparent pointer-events-none">
       
       {/* Left: Brand */}
-      <div className="flex items-center pointer-events-auto">
+      <div className="flex flex-col justify-center pointer-events-auto">
          <span className="font-serif-display text-2xl md:text-3xl font-bold text-[#831843] tracking-tight drop-shadow-sm">Bytes.</span>
+         {userName && (
+             <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#831843]/60 -mt-1 ml-0.5 animate-fade-in-up">
+                 Hello, {userName}
+             </span>
+         )}
       </div>
 
       {/* Right: Actions */}
@@ -51,9 +57,13 @@ const Navbar: React.FC<NavbarProps> = ({ onProfileClick, onSearchClick, onNotify
           onClick={onProfileClick}
           className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/50 text-[#831843] border border-white/50 hover:scale-105 flex items-center justify-center transition-all backdrop-blur-md shadow-md"
         >
-          <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
+          {userName ? (
+            <span className="font-serif font-bold text-lg">{userName[0].toUpperCase()}</span>
+          ) : (
+            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          )}
         </button>
       </div>
 

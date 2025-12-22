@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UserPreferences } from '../types';
 
 interface OnboardingProps {
@@ -9,7 +9,10 @@ interface OnboardingProps {
 const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [step, setStep] = useState(1);
   const [isExiting, setIsExiting] = useState(false);
+  const [customTopic, setCustomTopic] = useState('');
+  
   const [prefs, setPrefs] = useState<UserPreferences>({
+    userName: '',
     topics: [],
     readingStyle: 'Brief summaries',
     tone: 'Straight facts',
@@ -21,13 +24,25 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     }
   });
 
-  const topicsList = ['AI & Tech', 'Startups', 'Global Markets', 'Policy', 'Geopolitics', 'Climate', 'Culture', 'Science', 'Finance', 'Health'];
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const topicInputRef = useRef<HTMLInputElement>(null);
+
+  // Suggested defaults
+  const topicsList = ['AI & Tech', 'Startups', 'Global Markets', 'Science', 'Culture'];
 
   const toggleTopic = (topic: string) => {
     setPrefs(p => ({
       ...p,
       topics: p.topics.includes(topic) ? p.topics.filter(t => t !== topic) : [...p.topics, topic]
     }));
+  };
+
+  const addCustomTopic = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (customTopic.trim() && !prefs.topics.includes(customTopic.trim())) {
+      toggleTopic(customTopic.trim());
+      setCustomTopic('');
+    }
   };
 
   const handleNext = () => {
@@ -41,9 +56,16 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     }, 800);
   };
 
+  // Auto-focus logic
   useEffect(() => {
+    if (step === 2) {
+      setTimeout(() => nameInputRef.current?.focus(), 100);
+    }
+    if (step === 3) {
+      setTimeout(() => topicInputRef.current?.focus(), 100);
+    }
     if (step === 4) {
-      const timer = setTimeout(handleComplete, 2500);
+      const timer = setTimeout(handleComplete, 3000);
       return () => clearTimeout(timer);
     }
   }, [step]);
@@ -52,14 +74,14 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-700 ${isExiting ? 'opacity-0' : 'opacity-100'}`}>
       
       {/* 1. Main Floating Card (Light Glass) */}
-      <div className="relative z-10 w-full max-w-[320px] md:max-w-md mx-6">
+      <div className="relative z-10 w-full max-w-[340px] md:max-w-md mx-6">
         
         {/* Card Body */}
-        <div className="glass-card rounded-[32px] md:rounded-[40px] p-6 md:p-10 transition-all duration-500 animate-fade-in-up shadow-2xl ring-1 ring-white/60">
+        <div className="glass-card rounded-[32px] md:rounded-[40px] p-6 md:p-10 transition-all duration-500 animate-fade-in-up shadow-2xl ring-1 ring-white/60 min-h-[400px] flex flex-col">
             
             {/* Step 1: Welcome / "Get Started" */}
             {step === 1 && (
-                <div className="flex flex-col items-center text-center">
+                <div className="flex flex-col items-center text-center my-auto">
                     <div className="w-16 h-16 md:w-20 md:h-20 mb-6 flex items-center justify-center bg-white shadow-lg text-[#831843] rounded-2xl transform -rotate-3 border border-rose-100">
                          <span className="font-serif-display text-3xl md:text-4xl font-bold">B</span>
                     </div>
@@ -79,43 +101,33 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                             Get Started
                         </button>
                     </div>
-                    
-                    <p className="mt-6 text-[9px] text-[#831843]/40 font-semibold tracking-wide">By continuing you agree to our Terms.</p>
                 </div>
             )}
 
-            {/* Step 2: Topics Selection */}
+            {/* Step 2: Name Input */}
             {step === 2 && (
-                <div className="flex flex-col h-full">
-                    <div className="text-center mb-6">
-                        <h2 className="text-xl md:text-2xl font-serif-display font-bold text-[#4a044e] mb-1">Your Interests</h2>
-                        <p className="text-[#831843]/60 text-[11px] md:text-xs font-medium">Select 3 topics to tailor your feed</p>
+                <div className="flex flex-col h-full my-auto">
+                    <div className="text-center mb-8">
+                         <h2 className="text-xl md:text-2xl font-serif-display font-bold text-[#4a044e] mb-2">First, an introduction.</h2>
+                         <p className="text-[#831843]/60 text-[11px] md:text-xs font-medium">How should we address you?</p>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 justify-center mb-8">
-                        {topicsList.map(t => {
-                            const isSelected = prefs.topics.includes(t);
-                            return (
-                                <button 
-                                    key={t}
-                                    onClick={() => toggleTopic(t)}
-                                    className={`
-                                        px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[10px] md:text-[11px] font-bold transition-all duration-300 border uppercase tracking-wide
-                                        ${isSelected 
-                                            ? 'bg-[#831843] text-white border-[#831843] shadow-md transform scale-105' 
-                                            : 'bg-white border-rose-200 text-[#831843]/80 hover:bg-rose-50'}
-                                    `}
-                                >
-                                    {t}
-                                </button>
-                            );
-                        })}
+                    <div className="w-full px-2 mb-8">
+                        <input
+                            ref={nameInputRef}
+                            type="text"
+                            value={prefs.userName}
+                            onChange={(e) => setPrefs({...prefs, userName: e.target.value})}
+                            onKeyDown={(e) => e.key === 'Enter' && prefs.userName && handleNext()}
+                            placeholder="Your Name"
+                            className="w-full bg-white/50 border-b-2 border-[#831843]/20 px-4 py-3 text-center text-xl md:text-2xl font-serif-display text-[#4a044e] placeholder:text-[#831843]/30 focus:outline-none focus:border-[#831843] transition-colors rounded-t-lg"
+                        />
                     </div>
 
                     <div className="mt-auto px-2">
                          <button 
                             onClick={handleNext}
-                            disabled={prefs.topics.length < 3}
+                            disabled={!prefs.userName}
                             className="w-full py-3.5 rounded-full font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all disabled:opacity-30 disabled:cursor-not-allowed
                             bg-[#831843] text-white shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-95"
                         >
@@ -125,46 +137,76 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                 </div>
             )}
 
-            {/* Step 3: Density Preference */}
+            {/* Step 3: Topics Selection with Custom Input */}
             {step === 3 && (
-                <div>
-                     <div className="text-center mb-6">
-                        <h2 className="text-xl md:text-2xl font-serif-display font-bold text-[#4a044e] mb-1">Reading Style</h2>
-                        <p className="text-[#831843]/60 text-[11px] md:text-xs font-medium">How much depth do you need?</p>
+                <div className="flex flex-col h-full">
+                    <div className="text-center mb-4">
+                        <h2 className="text-xl md:text-2xl font-serif-display font-bold text-[#4a044e] mb-1">
+                           Hello, {prefs.userName}.
+                        </h2>
+                        <p className="text-[#831843]/60 text-[11px] md:text-xs font-medium">What dominates your curiosity?</p>
                     </div>
 
-                    <div className="space-y-2 mb-8">
-                        {['Ultra quick (10s)', 'Brief summaries', 'Deep dives'].map(style => {
-                            const val = style.split(' (')[0];
-                            const isSelected = prefs.readingStyle === val;
-                            return (
-                                <button 
-                                    key={style}
-                                    onClick={() => { setPrefs(p => ({...p, readingStyle: val as any})); handleNext(); }}
-                                    className={`
-                                        w-full p-3.5 md:p-4 flex justify-between items-center text-left transition-all border rounded-[20px]
-                                        ${isSelected 
-                                            ? 'bg-rose-100 border-rose-200 text-[#4a044e] shadow-sm' 
-                                            : 'bg-white border-rose-100 text-[#831843]/60 hover:bg-rose-50'}
-                                    `}
-                                >
-                                    <span className={`font-bold text-xs md:text-sm tracking-tight`}>{style}</span>
-                                    <div className={`
-                                        w-4 h-4 rounded-full border flex items-center justify-center transition-colors
-                                        ${isSelected ? 'border-[#831843] bg-[#831843]' : 'border-rose-300'}
-                                    `}>
-                                        {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                                    </div>
-                                </button>
-                            );
-                        })}
+                    {/* Custom Input */}
+                    <form onSubmit={addCustomTopic} className="mb-4 relative">
+                        <input
+                            ref={topicInputRef}
+                            type="text"
+                            value={customTopic}
+                            onChange={(e) => setCustomTopic(e.target.value)}
+                            placeholder="Type a specific interest..."
+                            className="w-full bg-white/80 border border-rose-200 rounded-xl px-4 py-3 pr-10 text-sm font-medium text-[#4a044e] placeholder:text-[#831843]/40 focus:outline-none focus:border-[#831843] focus:ring-1 focus:ring-[#831843] transition-all"
+                        />
+                        <button 
+                            type="submit"
+                            disabled={!customTopic.trim()}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-[#831843] disabled:opacity-30 hover:bg-rose-50 rounded-lg transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                        </button>
+                    </form>
+
+                    {/* Selected & Suggested Topics */}
+                    <div className="flex flex-wrap gap-2 justify-center mb-6 overflow-y-auto max-h-[160px] p-1">
+                        {/* Render Selected First */}
+                        {prefs.topics.map(t => (
+                            <button 
+                                key={t}
+                                onClick={() => toggleTopic(t)}
+                                className="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all duration-300 border uppercase tracking-wide bg-[#831843] text-white border-[#831843] shadow-md transform scale-100 hover:scale-105"
+                            >
+                                {t} ✕
+                            </button>
+                        ))}
+                        
+                        {/* Render Suggestions that aren't selected */}
+                        {topicsList.filter(t => !prefs.topics.includes(t)).map(t => (
+                            <button 
+                                key={t}
+                                onClick={() => toggleTopic(t)}
+                                className="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all duration-300 border uppercase tracking-wide bg-white border-rose-200 text-[#831843]/70 hover:bg-rose-50 hover:border-rose-300"
+                            >
+                                {t}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="mt-auto px-2">
+                         <button 
+                            onClick={handleNext}
+                            disabled={prefs.topics.length < 1}
+                            className="w-full py-3.5 rounded-full font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all disabled:opacity-30 disabled:cursor-not-allowed
+                            bg-[#831843] text-white shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-95"
+                        >
+                            {prefs.topics.length === 0 ? 'Select at least 1' : `Continue with ${prefs.topics.length}`}
+                        </button>
                     </div>
                 </div>
             )}
 
             {/* Step 4: Personalization Spinner */}
             {step === 4 && (
-                <div className="flex flex-col items-center justify-center py-8">
+                <div className="flex flex-col items-center justify-center my-auto">
                     <div className="relative w-12 h-12 md:w-16 md:h-16 mb-6">
                         <svg className="animate-spin w-full h-full text-[#be185d]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"></circle>
@@ -172,8 +214,12 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                         </svg>
                     </div>
                     
-                    <h2 className="text-lg md:text-xl font-serif-display font-bold text-[#4a044e] mb-1">Curating Feed</h2>
-                    <p className="text-[10px] text-[#831843]/60 uppercase tracking-[0.2em] animate-pulse font-bold">Designing experience...</p>
+                    <h2 className="text-lg md:text-xl font-serif-display font-bold text-[#4a044e] mb-1">
+                        Designing for {prefs.userName}
+                    </h2>
+                    <p className="text-[10px] text-[#831843]/60 uppercase tracking-[0.2em] animate-pulse font-bold text-center">
+                        Synthesizing {prefs.topics.slice(0, 2).join(', ')}...
+                    </p>
                 </div>
             )}
 
