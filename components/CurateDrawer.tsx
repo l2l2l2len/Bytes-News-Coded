@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 
 interface CurateDrawerProps {
   isOpen: boolean;
@@ -10,7 +10,8 @@ interface CurateDrawerProps {
 }
 
 const CurateDrawer: React.FC<CurateDrawerProps> = ({ isOpen, onClose, onTopicToggle, selectedTopics }) => {
-  
+  const [inputValue, setInputValue] = useState('');
+
   const categories = [
     { label: 'US News', icon: '🇺🇸' },
     { label: 'World', icon: '🌍' },
@@ -22,6 +23,22 @@ const CurateDrawer: React.FC<CurateDrawerProps> = ({ isOpen, onClose, onTopicTog
     { label: 'Entertainment', icon: '🎬' },
     { label: 'Crypto', icon: '₿' },
   ];
+
+  const handleAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    const val = inputValue.trim();
+    if (val) {
+        // If it's already selected, don't toggle it off, just clear input. 
+        // If it's not selected, toggle it on.
+        if (!selectedTopics.includes(val)) {
+            onTopicToggle(val);
+        }
+        setInputValue('');
+    }
+  };
+
+  // Identify custom topics (those in selectedTopics but NOT in the predefined categories)
+  const customTopics = selectedTopics.filter(t => !categories.some(c => c.label === t));
 
   return (
     <>
@@ -61,6 +78,44 @@ const CurateDrawer: React.FC<CurateDrawerProps> = ({ isOpen, onClose, onTopicTog
              <h3 className="font-serif-display text-2xl font-bold text-[#4a044e] mb-2">Curate Feed</h3>
              <p className="text-xs text-[#831843]/60 mb-6">Tap to toggle interest vectors</p>
              
+             {/* Input for Custom Topics */}
+             <form onSubmit={handleAdd} className="mb-8 relative">
+                <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder="Add specific interest (e.g. SpaceX)..."
+                    className="w-full bg-white border border-rose-200 rounded-2xl px-5 py-4 pr-12 text-sm font-medium text-[#4a044e] placeholder:text-[#831843]/40 focus:outline-none focus:border-[#831843] focus:ring-1 focus:ring-[#831843] transition-all shadow-sm"
+                />
+                <button 
+                    type="submit"
+                    disabled={!inputValue.trim()}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#831843] disabled:opacity-30 hover:bg-rose-50 rounded-xl transition-colors"
+                >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                </button>
+             </form>
+
+             {/* Custom Topics List (if any) */}
+             {customTopics.length > 0 && (
+                <div className="mb-6">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#831843]/40 mb-3">Your Additions</p>
+                    <div className="flex flex-wrap gap-2">
+                        {customTopics.map(topic => (
+                            <button 
+                                key={topic}
+                                onClick={() => onTopicToggle(topic)}
+                                className="pl-4 pr-3 py-2 rounded-full flex items-center gap-2 border bg-[#831843] text-white border-[#831843] shadow-md hover:bg-[#be185d] transition-all"
+                            >
+                                <span className="font-bold text-xs">{topic}</span>
+                                <svg className="w-3.5 h-3.5 opacity-70 hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+             )}
+
+             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#831843]/40 mb-3">Essentials</p>
              <div className="flex flex-wrap gap-3">
                {categories.map(cat => {
                  const isActive = selectedTopics.includes(cat.label);
@@ -71,12 +126,13 @@ const CurateDrawer: React.FC<CurateDrawerProps> = ({ isOpen, onClose, onTopicTog
                      className={`
                        pl-3 pr-5 py-3 rounded-full flex items-center gap-2 border transition-all duration-300
                        ${isActive 
-                            ? 'bg-[#831843] text-white border-[#831843] transform scale-105 shadow-lg' 
-                            : 'bg-white border-rose-100 text-[#831843]/60 hover:bg-rose-50'}
+                            ? 'bg-white border-rose-300 text-[#4a044e] shadow-md ring-1 ring-rose-100' 
+                            : 'bg-white/50 border-transparent text-[#831843]/50 hover:bg-rose-50'}
                      `}
                    >
-                     <span className="text-lg">{cat.icon}</span>
-                     <span className={`font-bold text-sm ${isActive ? 'text-white' : 'text-[#831843]/80'}`}>{cat.label}</span>
+                     <span className="text-lg grayscale opacity-80">{cat.icon}</span>
+                     <span className={`font-bold text-sm ${isActive ? 'text-[#4a044e]' : 'text-[#831843]/60'}`}>{cat.label}</span>
+                     {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#831843] ml-1" />}
                    </button>
                  )
                })}
