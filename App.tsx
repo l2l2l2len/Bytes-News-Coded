@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Navbar from './components/Navbar';
 import NewsSlide from './components/NewsSlide';
@@ -22,44 +23,46 @@ const App: React.FC = () => {
   const feedRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
 
+  // Optimized Speed Strategy: 5 focused micro-batches running in parallel.
+  // Smaller batches generate faster than large ones, populating the feed progressively.
   const BATCHES = useMemo(() => [
-    ['US National News', 'International World News'],
-    ['Technology Trends', 'Artificial Intelligence'],
-    ['Financial Markets', 'Global Economy'],
-    ['Science Breakthroughs', 'Health & Medicine'],
-    ['Entertainment', 'Internet Culture', 'Sports']
+    ['Breaking News', 'Top Headlines'],
+    ['US Politics', 'Global Economy'],
+    ['Technology', 'Artificial Intelligence', 'Startups'],
+    ['Science', 'Health', 'Environment'],
+    ['Sports', 'Entertainment', 'Culture']
   ], []);
 
   const startNewsStream = useCallback(async () => {
     if (!process.env.API_KEY || isStreaming) return;
     
     setIsStreaming(true);
-    setStreamStatus('Initializing global feed...');
+    setStreamStatus('Initializing velocity wire...');
 
-    for (let i = 0; i < BATCHES.length; i++) {
-        const batchTopics = BATCHES[i];
-        setStreamStatus(`Syncing: ${batchTopics.join(' & ')}...`);
-        
+    // Fire all 5 batches simultaneously
+    const fetchPromises = BATCHES.map(async (batchTopics, index) => {
         try {
+            // Slight stagger (100ms) to prevent instant rate-limit clashes while keeping it fast
+            await new Promise(r => setTimeout(r, index * 100)); 
+            
             const newBytes = await fetchRealTimeNews(batchTopics);
+            
             setNews(prev => {
                 const existingIds = new Set(prev.map(p => p.id));
                 const uniqueNew = newBytes.filter(b => !existingIds.has(b.id));
+                // Append immediately so user sees news as soon as ANY batch finishes
                 return [...prev, ...uniqueNew];
             });
-
-            if (i < BATCHES.length - 1) {
-                await new Promise(resolve => setTimeout(resolve, 2000));
-            }
-
         } catch (error) {
-            console.error(`Batch ${i} failed`, error);
+            console.error(`Batch ${index} failed`, error);
         }
-    }
+    });
+
+    await Promise.all(fetchPromises);
 
     setStreamStatus('');
     setIsStreaming(false);
-  }, [BATCHES]);
+  }, [BATCHES, isStreaming]);
 
   useEffect(() => {
     if (initialized.current) return;
@@ -79,7 +82,9 @@ const App: React.FC = () => {
   }, [startNewsStream]);
 
   const handleRefresh = () => {
-    setNews(PAPERS.map(p => ({ ...p, isLiked: false, isSaved: false })));
+    // Clear feed to show speed of new engine
+    setNews([]); 
+    setStreamStatus('Rewiring feed...');
     feedRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     startNewsStream();
   };
@@ -145,6 +150,8 @@ const App: React.FC = () => {
                 ref={feedRef}
                 className="h-[100dvh] w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar"
             >
+                {/* Initial Empty State / Skeleton could go here if needed, but we rely on speed now */}
+                
                 {filteredNews.length > 0 ? (
                   <>
                     {filteredNews.map((byte, index) => (
@@ -156,7 +163,7 @@ const App: React.FC = () => {
                         />
                     ))}
                   </>
-                ) : (
+                ) : !isStreaming ? (
                     <div className="h-[100dvh] w-full flex flex-col items-center justify-center text-center p-8 snap-center">
                         <div className="glass-panel p-8 rounded-[32px] max-w-sm w-full mx-auto shadow-xl">
                             <h3 className="text-3xl font-serif-display font-bold text-[#831843] mb-3">Quiet today.</h3>
@@ -169,7 +176,7 @@ const App: React.FC = () => {
                             </button>
                         </div>
                     </div>
-                )}
+                ) : null}
 
                 {/* Status Indicator */}
                 <div className="h-[20dvh] w-full flex flex-col items-center justify-center gap-3 snap-center text-[#831843]/50 pb-20">
@@ -177,7 +184,7 @@ const App: React.FC = () => {
                         <>
                              <div className="flex items-center gap-2">
                                 <span className="w-2 h-2 bg-[#be185d] rounded-full animate-pulse"></span>
-                                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Syncing global wire</span>
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Live Wire: {news.length}/40</span>
                             </div>
                             <div className="w-24 h-1 bg-[#831843]/10 rounded-full overflow-hidden">
                                 <div className="h-full bg-[#be185d] animate-progress-indeterminate"></div>
@@ -185,7 +192,7 @@ const App: React.FC = () => {
                         </>
                     ) : (
                         <span className="text-[10px] font-bold uppercase tracking-[0.2em]">
-                             You're all caught up
+                             End of Wire
                         </span>
                     )}
                 </div>

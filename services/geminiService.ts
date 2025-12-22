@@ -61,24 +61,23 @@ export const sendMessageToGemini = async (history: {role: string, text: string}[
 };
 
 const generateFallbackNews = (topicString: string): Byte[] => {
-    return [
-        {
-            id: `fallback-${Date.now()}`,
-            title: `Latest Updates: ${topicString.split(',')[0]}`,
-            publisher: "Bytes Wire",
-            authors: ["AI Curator"],
-            abstract: "We are currently syncing with global sources to bring you the most accurate real-time coverage.",
-            category: "World",
-            readTime: "1 min",
-            fileUrl: getCategoryImageUrl("World"),
-            likes: 150,
-            comments: 5,
-            publicationDate: "Now",
-            isLiked: false,
-            isSaved: false,
-            sourceUrl: `https://www.google.com/search?q=${encodeURIComponent(topicString)}&tbm=nws`
-        }
-    ];
+    // Generate fewer fallbacks to avoid cluttering if one batch fails
+    return [1, 2].map(i => ({
+        id: `fallback-${Date.now()}-${i}`,
+        title: `Latest Updates: ${topicString.split(',')[0]} (Story ${i})`,
+        publisher: "Bytes Wire",
+        authors: ["AI Curator"],
+        abstract: "We are currently syncing with global sources to bring you the most accurate real-time coverage. Please verify connection.",
+        category: "World",
+        readTime: "1 min",
+        fileUrl: getCategoryImageUrl("World"),
+        likes: 150 + i * 10,
+        comments: 5,
+        publicationDate: "Now",
+        isLiked: false,
+        isSaved: false,
+        sourceUrl: `https://www.google.com/search?q=${encodeURIComponent(topicString)}&tbm=nws`
+    }));
 };
 
 /**
@@ -144,15 +143,17 @@ export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
 
   const topicString = topics.length > 0 ? topics.join(', ') : 'Global Breaking News';
   
-  // Prompt optimized for high throughput (6 items) and high accuracy
+  // OPTIMIZATION: Reduced count to 8 to improve generation speed per batch.
+  // 5 batches x 8 items = 40 total items.
   const prompt = `
-    Find 6 distinct, high-impact breaking news stories related to: ${topicString}.
+    Find 8 distinct, high-impact breaking news stories related to: ${topicString}.
 
     CRITICAL REQUIREMENTS:
     1. Events must be from the last 24 hours.
     2. Verify facts against multiple sources.
     3. Avoid duplicate stories.
     4. PRIORITIZE FACTUAL ACCURACY over sensationalism.
+    5. Ensure a diverse mix of stories within the provided topics.
 
     Output strictly as a valid JSON array:
     [
