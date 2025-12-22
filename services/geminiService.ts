@@ -61,14 +61,14 @@ export const sendMessageToGemini = async (history: {role: string, text: string}[
 };
 
 const generateFallbackNews = (topicString: string): Byte[] => {
-    // Generate fewer fallbacks to avoid cluttering if one batch fails
-    return [1, 2].map(i => ({
+    // Generate fallback content so the user NEVER sees an empty screen
+    return [1, 2, 3].map(i => ({
         id: `fallback-${Date.now()}-${i}`,
-        title: `Latest Updates: ${topicString.split(',')[0]} (Story ${i})`,
+        title: `Latest Updates: ${topicString.split(',')[0]}`,
         publisher: "Bytes Wire",
         authors: ["AI Curator"],
         abstract: "We are currently syncing with global sources to bring you the most accurate real-time coverage. Please verify connection.",
-        category: "World",
+        category: "Breaking",
         readTime: "1 min",
         fileUrl: getCategoryImageUrl("World"),
         likes: 150 + i * 10,
@@ -82,8 +82,6 @@ const generateFallbackNews = (topicString: string): Byte[] => {
 
 /**
  * Intelligent Deep-Link Matcher
- * Analyzes search results to find the specific article URL that matches the generated headline.
- * STRICT MODE: Only returns a URL if it matches the content, otherwise returns null.
  */
 const findBestVerifiedLink = (headline: string, publisher: string, groundingChunks: any[]) => {
   if (!groundingChunks || groundingChunks.length === 0) return null;
@@ -99,7 +97,7 @@ const findBestVerifiedLink = (headline: string, publisher: string, groundingChun
         const cUri = chunk.web.uri.toLowerCase();
         let score = 0;
 
-        // 1. Semantic Title Match (Headline words present in Source Title)
+        // 1. Semantic Title Match
         let matchCount = 0;
         hWords.forEach(w => {
             if (cTitle.includes(w)) matchCount++;
@@ -113,57 +111,32 @@ const findBestVerifiedLink = (headline: string, publisher: string, groundingChun
             score += 40;
         }
 
-        // 3. Deep Link Structural Validation
-        try {
-            const url = new URL(chunk.web.uri);
-            const path = url.pathname;
-            // Reward paths that look like articles (e.g. /2024/05/title, /article/123)
-            // Penalize root paths (e.g. /, /index.html)
-            if (path.length > 1 && path.split('/').length > 2) {
-                score += 30;
-            }
-            if (path === '/' || path === '' || path === '/index.html' || path.includes('login') || path.includes('subscribe')) {
-                score -= 200; // Nuclear penalty for non-content pages
-            }
-        } catch {
-            score -= 200;
-        }
-
         return { uri: chunk.web.uri, score };
     })
     .sort((a, b) => b.score - a.score);
 
-  // High threshold to ensure we don't return garbage links. 
-  // It's better to fallback to a search page than to send a user to a random wrong article.
   return scoredResults[0] && scoredResults[0].score > 50 ? scoredResults[0].uri : null;
 };
 
 export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
-  if (!process.env.API_KEY) return [];
-
   const topicString = topics.length > 0 ? topics.join(', ') : 'Global Breaking News';
   
-  // OPTIMIZATION: Reduced count to 8 to improve generation speed per batch.
-  // 5 batches x 8 items = 40 total items.
+  // IMMEDIATE FALLBACK if no API key is present.
+  // This ensures the app is functional (demo mode) even without configuration.
+  if (!process.env.API_KEY) {
+    console.warn("No API Key found. Returning fallback data.");
+    // Return a mix of static papers + generated fallbacks to simulate a full feed
+    if (topics.includes('Breaking News')) {
+         return PAPERS; 
+    }
+    return generateFallbackNews(topicString);
+  }
+
   const prompt = `
-    Find 8 distinct, high-impact breaking news stories related to: ${topicString}.
-
-    CRITICAL REQUIREMENTS:
-    1. Events must be from the last 24 hours.
-    2. Verify facts against multiple sources.
-    3. Avoid duplicate stories.
-    4. PRIORITIZE FACTUAL ACCURACY over sensationalism.
-    5. Ensure a diverse mix of stories within the provided topics.
-
+    Find 6 distinct, high-impact breaking news stories related to: ${topicString}.
+    Events must be from the last 24 hours.
     Output strictly as a valid JSON array:
-    [
-      {
-        "title": "Concise Headline",
-        "publisher": "Source Name",
-        "abstract": "Compelling summary (max 35 words)",
-        "category": "Category Name"
-      }
-    ]
+    [{"title": "Headline", "publisher": "Source", "abstract": "Summary (max 30 words)", "category": "Topic"}]
   `;
 
   try {
@@ -187,19 +160,14 @@ export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
         return generateFallbackNews(topicString);
     }
 
-    if (!Array.isArray(rawData)) return generateFallbackNews(topicString);
+    if (!Array.isArray(rawData) || rawData.length === 0) return generateFallbackNews(topicString);
 
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
 
     return rawData.map((item: any) => {
       const cat = item.category || "World";
-      
-      // 1. Try to find a verified deep link from the actual search metadata
-      // This is the ONLY way we accept a direct link. We do not trust the model's hallucinated URLs.
       let finalUrl = findBestVerifiedLink(item.title, item.publisher, groundingChunks);
       
-      // 2. Fallback: Create a specific Google News search link
-      // This guarantees the user never hits a 404 page. It sends them to a live search for that specific story.
       if (!finalUrl) {
           finalUrl = `https://www.google.com/search?q=${encodeURIComponent(item.title + " " + item.publisher)}&tbm=nws`;
       }
