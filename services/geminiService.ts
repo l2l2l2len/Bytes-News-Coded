@@ -20,10 +20,9 @@ const getCategoryImageUrl = (category: string): string => {
 };
 
 const generateFallbackNews = (topicString: string): Byte[] => {
-    // Return a subset of high-quality static papers mixed with generated meta-stories
     return PAPERS.slice(0, 3).map((p, i) => ({
         ...p,
-        id: `fallback-${Date.now()}-${i}`,
+        id: `fallback-${Date.now()}-${i}-${Math.random()}`,
         title: i === 0 ? `Latest in ${topicString.split(',')[0]}` : p.title,
         publicationDate: "JUST NOW"
     }));
@@ -49,14 +48,23 @@ export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
   
   if (!process.env.API_KEY) return generateFallbackNews(topicString);
 
-  const prompt = `Find 5 breaking news stories from the last 24 hours about: ${topicString}. Output strictly as valid JSON array: [{"title": "Headline", "publisher": "Source", "abstract": "Summary (30 words)", "category": "Topic"}]`;
+  // Added "distinct" and "narrow focus" instructions to prevent repetitive general news
+  const prompt = `
+    Find 5 HIGHLY SPECIFIC, distinct breaking news stories from the last 24 hours strictly about these topics: ${topicString}. 
+    Avoid generic global headlines unless they are directly related to the topics.
+    Output strictly as a valid JSON array of objects: 
+    [{"title": "Specific Headline", "publisher": "Source Name", "abstract": "30-word summary", "category": "TopicName"}]
+  `;
 
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
-      config: { tools: [{ googleSearch: {} }] },
+      config: { 
+        tools: [{ googleSearch: {} }],
+        temperature: 0.7 // Slight randomness to avoid repetitive API responses
+      },
     });
 
     let text = response.text || "[]";
@@ -69,12 +77,14 @@ export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
 
     return rawData.map((item: any, i: number) => {
-      const cat = item.category || "World";
+      const cat = item.category || (topics[0] || "World");
       let finalUrl = findBestVerifiedLink(item.title, item.publisher, groundingChunks);
-      if (!finalUrl) finalUrl = `https://www.google.com/search?q=${encodeURIComponent(item.title)}&tbm=nws`;
+      if (!finalUrl) finalUrl = `https://www.google.com/search?q=${encodeURIComponent(item.title + " " + item.publisher)}&tbm=nws`;
 
+      // Use a more robust ID based on title hash to help with deduplication
+      const titleHash = item.title.substring(0, 10).replace(/\s/g, '_');
       return {
-        id: `live-${Date.now()}-${i}`,
+        id: `live-${titleHash}-${Date.now()}-${i}`,
         title: item.title,
         publisher: item.publisher,
         authors: ["AI Curator"],

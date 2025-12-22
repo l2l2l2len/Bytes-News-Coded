@@ -19,7 +19,13 @@ const App: React.FC = () => {
   const [userName, setUserName] = useState('');
   const [streamStatus, setStreamStatus] = useState<string>(''); 
   const [isStreaming, setIsStreaming] = useState(false);
+  
+  // Track unique IDs to prevent duplicates
+  const loadedIds = useRef<Set<string>>(new Set());
+  const topicCycleIndex = useRef(0);
+  const nextBatchIndex = useRef(1);
   const feedRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
 
   const news = useMemo(() => {
@@ -29,43 +35,118 @@ const App: React.FC = () => {
       .flatMap(key => newsBuckets[key]);
   }, [newsBuckets]);
 
+  // Filters out duplicates based on title/id and keeps global registry updated
+  const deduplicate = useCallback((items: Byte[]) => {
+    return items.filter(item => {
+      // Create a simplified key to catch "same news different source" or API repeats
+      const key = item.title.toLowerCase().trim().substring(0, 40);
+      if (loadedIds.current.has(key)) return false;
+      loadedIds.current.add(key);
+      return true;
+    });
+  }, []);
+
   const getDynamicBatches = useCallback(() => {
-    const customTopics = selectedTopics.filter(t => !DEFAULT_CATEGORIES.some(c => c.label === t));
-    const batch0 = ['Breaking News', ...customTopics.slice(0, 2)];
-    const batch1 = selectedTopics.filter(t => !batch0.includes(t)).slice(0, 3);
-    return [batch0, batch1, ['Global Trends', 'Innovation']];
+    if (selectedTopics.length === 0) return [['Breaking News'], ['Global Trends']];
+    
+    // Group selected topics into logical pairs for the initial load
+    const chunks: string[][] = [];
+    for (let i = 0; i < selectedTopics.length; i += 2) {
+      chunks.push(selectedTopics.slice(i, i + 2));
+    }
+    return chunks.length > 0 ? chunks : [['Breaking News']];
   }, [selectedTopics]);
 
   const startNewsStream = useCallback(async (isRefresh = false) => {
     if (isStreaming) return;
     setIsStreaming(true);
     setStreamStatus('Syncing feed...');
+    
     if (isRefresh) {
         setNewsBuckets({}); 
+        loadedIds.current.clear();
+        nextBatchIndex.current = 1;
+        topicCycleIndex.current = 0;
         if (feedRef.current) feedRef.current.scrollTop = 0;
     }
 
     const batches = getDynamicBatches();
 
-    // 1. Fetch Batch 0 (Top) FIRST
+    // 1. Fetch First Batch (Top Priority)
     try {
-        const b0 = await fetchRealTimeNews(batches[0]);
-        setNewsBuckets(prev => ({ ...prev, 0: b0 }));
+        const rawB0 = await fetchRealTimeNews(batches[0]);
+        const b0 = deduplicate(rawB0);
+        
+        // If API returns nothing unique, inject static papers once
+        const finalB0 = b0.length > 0 ? b0 : deduplicate(PAPERS.slice(0, 4));
+        setNewsBuckets(prev => ({ ...prev, 0: finalB0 }));
     } catch (e) {
-        setNewsBuckets({ 0: PAPERS.slice(0, 4) });
+        setNewsBuckets({ 0: deduplicate(PAPERS.slice(0, 4)) });
     }
 
-    // 2. Load others in background with stagger to respect quota
-    const others = batches.slice(1);
-    others.forEach(async (topics, i) => {
-        await new Promise(r => setTimeout(r, (i + 1) * 2000));
-        const bX = await fetchRealTimeNews(topics);
-        setNewsBuckets(prev => ({ ...prev, [i+1]: bX }));
-    });
+    // 2. Load one more batch in background to fill the screen
+    if (batches.length > 1) {
+        setTimeout(async () => {
+            try {
+                const rawB1 = await fetchRealTimeNews(batches[1]);
+                const b1 = deduplicate(rawB1);
+                if (b1.length > 0) {
+                    setNewsBuckets(prev => ({ ...prev, 1: b1 }));
+                    nextBatchIndex.current = 2;
+                }
+            } catch (err) {}
+        }, 1500);
+    }
 
     setStreamStatus('');
     setIsStreaming(false);
-  }, [getDynamicBatches, isStreaming]);
+  }, [getDynamicBatches, isStreaming, deduplicate]);
+
+  // Infinite Scroll Handler: Cycles through user interests for uniqueness
+  const handleLoadMore = useCallback(async () => {
+    if (isStreaming || selectedTopics.length === 0) return;
+    setIsStreaming(true);
+
+    // Pick the next topic in the user's interest list to ensure variety
+    const topicToFetch = selectedTopics[topicCycleIndex.current % selectedTopics.length];
+    topicCycleIndex.current++;
+    
+    const batchIdx = nextBatchIndex.current++;
+
+    try {
+      const rawNewNews = await fetchRealTimeNews([topicToFetch]);
+      const uniqueNews = deduplicate(rawNewNews);
+      
+      if (uniqueNews.length > 0) {
+        setNewsBuckets(prev => ({ ...prev, [batchIdx]: uniqueNews }));
+      } else {
+        // If API yielded no unique news for this topic, try one more time with a generic one
+        const rawGlobal = await fetchRealTimeNews(['Global Innovation']);
+        const uniqueGlobal = deduplicate(rawGlobal);
+        if (uniqueGlobal.length > 0) {
+          setNewsBuckets(prev => ({ ...prev, [batchIdx]: uniqueGlobal }));
+        }
+      }
+    } catch (err) {
+      console.error("Load more failed", err);
+    } finally {
+      setIsStreaming(false);
+    }
+  }, [isStreaming, selectedTopics, deduplicate]);
+
+  // Intersection Observer for Infinite Scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isStreaming && news.length > 0) {
+          handleLoadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: '400px' }
+    );
+    if (loadMoreRef.current) observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [news.length, isStreaming, handleLoadMore]);
 
   useEffect(() => {
     if (initialized.current) return;
@@ -108,10 +189,8 @@ const App: React.FC = () => {
   };
 
   const filteredNews = useMemo(() => {
-    return news.filter(byte => {
-      const matchesSearch = searchTerm === '' || byte.title.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesSearch;
-    });
+    if (!searchTerm) return news;
+    return news.filter(byte => byte.title.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [news, searchTerm]);
 
   return (
@@ -140,13 +219,34 @@ const App: React.FC = () => {
                     </div>
                 </div>
             )}
-            {filteredNews.length > 0 && isStreaming && (
-                <div className="h-[20vh] flex items-center justify-center snap-center pb-20 opacity-50"><span className="text-[10px] font-bold uppercase tracking-widest">Syncing more...</span></div>
-            )}
+            
+            {/* Load More Trigger */}
+            <div ref={loadMoreRef} className="h-20 w-full flex items-center justify-center snap-center pb-20">
+                {isStreaming && (
+                    <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 bg-[#831843] rounded-full animate-bounce delay-0"></div>
+                        <div className="w-1.5 h-1.5 bg-[#831843] rounded-full animate-bounce delay-150"></div>
+                        <div className="w-1.5 h-1.5 bg-[#831843] rounded-full animate-bounce delay-300"></div>
+                    </div>
+                )}
+            </div>
           </div>
         </div>
       )}
-      <CurateDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} selectedTopics={selectedTopics} onTopicToggle={(t) => setSelectedTopics(p => p.includes(t) ? p.filter(x => x !== t) : [...p, t])} onSearch={setSearchTerm} />
+      <CurateDrawer 
+        isOpen={isDrawerOpen} 
+        onClose={() => setIsDrawerOpen(false)} 
+        selectedTopics={selectedTopics} 
+        onTopicToggle={(t) => {
+            setSelectedTopics(p => {
+                const updated = p.includes(t) ? p.filter(x => x !== t) : [...p, t];
+                // Refresh feed if topics changed significantly
+                setTimeout(() => startNewsStream(true), 200);
+                return updated;
+            });
+        }} 
+        onSearch={setSearchTerm} 
+      />
       <style>{`
         @keyframes progress { 0% { width: 0%; transform: translateX(-100%); } 100% { width: 100%; transform: translateX(100%); } }
         .animate-progress { animation: progress 1.5s infinite linear; }
