@@ -1,11 +1,6 @@
+// Component removed - not used in current version
+import React from 'react';
 
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
-*/
+const Checkout: React.FC = () => null;
 
-import React, { useState } from 'react';
-import { Paper } from '../types';
-
-interface CheckoutProps {
-  onBack: () => void;
+export default Checkout;
