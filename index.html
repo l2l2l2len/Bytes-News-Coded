@@ -1,62 +1,22 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-
-    <!-- Primary Meta Tags -->
-    <title>Bytes - Intelligent News, Distilled</title>
-    <meta name="title" content="Bytes - Intelligent News, Distilled" />
-    <meta name="description" content="Experience clarity in 9 seconds. Bytes uses AI to curate and summarize the news that matters to you. No login required, completely free, privacy-first news reading." />
-    <meta name="keywords" content="news, AI news, news summary, personalized news, news aggregator, free news app, privacy-first, no login news" />
-    <meta name="author" content="Bytes" />
-    <meta name="robots" content="index, follow" />
-    <meta name="language" content="English" />
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://bytes-news.vercel.app/" />
-    <meta property="og:title" content="Bytes - Intelligent News, Distilled" />
-    <meta property="og:description" content="Experience clarity in 9 seconds. AI-powered news curation with no login required. Free and privacy-first." />
-    <meta property="og:image" content="https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=1200" />
-    <meta property="og:image:alt" content="Bytes News App - Intelligent news reading experience" />
-    <meta property="og:site_name" content="Bytes" />
-    <meta property="og:locale" content="en_US" />
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://bytes-news.vercel.app/" />
-    <meta property="twitter:title" content="Bytes - Intelligent News, Distilled" />
-    <meta property="twitter:description" content="Experience clarity in 9 seconds. AI-powered news curation with no login required." />
-    <meta property="twitter:image" content="https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=1200" />
-
-    <!-- PWA / Mobile -->
-    <meta name="theme-color" content="#831843" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Bytes" />
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23831843' width='100' height='100' rx='20'/><text x='50' y='70' font-size='60' text-anchor='middle' fill='white' font-family='serif' font-weight='bold'>B</text></svg>" />
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23831843' width='100' height='100' rx='15'/><text x='50' y='72' font-size='65' text-anchor='middle' fill='white' font-family='serif' font-weight='bold'>B</text></svg>" />
-
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://bytes-news.vercel.app/" />
-
-    <!-- Tailwind CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Bytes</title>
+    <meta name="description" content="News in 9 seconds." />
     <script src="https://cdn.tailwindcss.com"></script>
-
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Manrope:wght@300;400;500;600;700;800&display=swap');
-
+      
       :root {
         --font-serif: 'Playfair Display', serif;
         --font-sans: 'Manrope', sans-serif;
-        --color-bg: #fff1f2;
+        --color-bg: #fff1f2; /* Rose 50 */
         --color-surface: rgba(255, 255, 255, 0.6);
-        --color-text-main: #4a044e;
-        --color-text-muted: rgba(131, 24, 67, 0.7);
-        --color-primary: #831843;
+        --color-text-main: #4a044e; /* Fuchsia 950 - Deep Rose/Purple for contrast */
+        --color-text-muted: rgba(131, 24, 67, 0.7); /* Pink 900 low opacity */
       }
 
       html, body, #root {
@@ -69,7 +29,6 @@
         background-color: var(--color-bg);
         color: var(--color-text-main);
         -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
         -webkit-tap-highlight-color: transparent;
       }
 
@@ -78,24 +37,24 @@
       .font-sans-body { font-family: var(--font-sans); }
 
       /* Scrollbar Hiding */
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      *::-webkit-scrollbar { display: none; }
+      * { -ms-overflow-style: none; scrollbar-width: none; }
 
-      /* Glassmorphism Utilities */
+      /* Glassmorphism Utilities - Light Mode */
       .glass-panel {
         background: rgba(255, 255, 255, 0.65);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.8);
-        box-shadow: 0 4px 30px rgba(244, 63, 94, 0.1);
+        box-shadow: 0 4px 30px rgba(244, 63, 94, 0.1); /* Soft Pink Shadow */
       }
-
+      
       .glass-card {
-        background: rgba(255, 255, 255, 0.75);
+        background: rgba(255, 255, 255, 0.75); /* Milky White Glass */
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
         border: 1px solid rgba(255, 255, 255, 0.9);
-        box-shadow: 0 8px 32px 0 rgba(190, 24, 93, 0.1);
+        box-shadow: 0 8px 32px 0 rgba(190, 24, 93, 0.1); /* Rose Shadow */
       }
 
       /* Animations */
@@ -110,67 +69,22 @@
         50% { transform: translateY(-20px); }
         100% { transform: translateY(0px); }
       }
-
-      /* Focus visible styles for accessibility */
-      :focus-visible {
-        outline: 2px solid var(--color-primary);
-        outline-offset: 2px;
-      }
-
-      /* Reduced motion preference */
-      @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
-          animation-duration: 0.01ms !important;
-          animation-iteration-count: 1 !important;
-          transition-duration: 0.01ms !important;
-        }
-      }
     </style>
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "Bytes",
-      "description": "AI-powered news curation and summarization. Experience clarity in 9 seconds.",
-      "url": "https://bytes-news.vercel.app/",
-      "applicationCategory": "NewsApplication",
-      "operatingSystem": "Any",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      },
-      "featureList": [
-        "AI-powered news curation",
-        "Personalized news feed",
-        "No login required",
-        "Privacy-first design",
-        "Free to use"
-      ]
-    }
-    </script>
-
-    <script type="importmap">
+  <script type="importmap">
 {
   "imports": {
-    "react/": "https://esm.sh/react@^19.0.0/",
-    "react": "https://esm.sh/react@^19.0.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.0.0/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.0.0"
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
+    "vite": "https://esm.sh/vite@^7.2.7",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
   }
 }
-    </script>
-  </head>
+</script>
+</head>
   <body>
     <div id="root"></div>
-    <noscript>
-      <div style="padding: 2rem; text-align: center; font-family: system-ui, sans-serif;">
-        <h1>Bytes - Intelligent News</h1>
-        <p>Please enable JavaScript to use this application.</p>
-      </div>
-    </noscript>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

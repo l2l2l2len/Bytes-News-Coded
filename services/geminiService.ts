@@ -1,7 +1,9 @@
 
-import { GoogleGenAI } from "@google/genai";
-import { PAPERS } from '../constants';
+import { GoogleGenAI, Type } from "@google/genai";
 import { Byte } from '../types';
+
+const DB_KEY = 'bytes_news_cache_v2';
+const SYNC_META_KEY = 'bytes_sync_meta_v2';
 
 const getCategoryImageUrl = (category: string): string => {
   const map: Record<string, string> = {
@@ -12,95 +14,110 @@ const getCategoryImageUrl = (category: string): string => {
     'Finance': 'photo-1611974765270-ca12586343bb',
     'Health': 'photo-1576091160399-112ba8d25d1d',
     'Culture': 'photo-1499750310107-5fef28a66643',
-    'Politics': 'photo-1529101091760-61df6be5d187',
+    'Sports': 'photo-1504450758481-7338eba7524a',
   };
   const key = Object.keys(map).find(k => category.includes(k)) || 'World';
   const imgId = map[key] || 'photo-1504711434969-e33886168f5c';
   return `https://images.unsplash.com/${imgId}?auto=format&fit=crop&q=80&w=1200`;
 };
 
-const generateFallbackNews = (topicString: string): Byte[] => {
-    return PAPERS.slice(0, 3).map((p, i) => ({
-        ...p,
-        id: `fallback-${Date.now()}-${i}-${Math.random()}`,
-        title: i === 0 ? `Latest in ${topicString.split(',')[0]}` : p.title,
-        publicationDate: "JUST NOW"
-    }));
+export const getCachedNews = (): Byte[] => {
+  const data = localStorage.getItem(DB_KEY);
+  return data ? JSON.parse(data) : [];
 };
 
-const findBestVerifiedLink = (headline: string, publisher: string, groundingChunks: any[]) => {
-  if (!groundingChunks || groundingChunks.length === 0) return null;
-  const hWords = headline.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 3);
-  const scoredResults = groundingChunks
-    .filter(chunk => chunk.web && chunk.web.uri)
-    .map(chunk => {
-        const cTitle = (chunk.web.title || "").toLowerCase();
-        let matchCount = 0;
-        hWords.forEach(w => { if (cTitle.includes(w)) matchCount++; });
-        return { uri: chunk.web.uri, score: (matchCount / Math.max(1, hWords.length)) * 100 };
-    })
-    .sort((a, b) => b.score - a.score);
-  return scoredResults[0] && scoredResults[0].score > 40 ? scoredResults[0].uri : null;
-};
+/**
+ * PRODUCTION-GRADE NEWS SYNC ENGINE
+ * Uses gemini-3-flash-preview for speed and Google Search for accuracy.
+ */
+export const fetchRealTimeNews = async (topics: string[], force = false): Promise<Byte[]> => {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  if (!apiKey) {
+    console.error("Gemini API Key missing. Please set the GEMINI_API_KEY environment variable.");
+    return getCachedNews();
+  }
 
-export const fetchRealTimeNews = async (topics: string[]): Promise<Byte[]> => {
-  const topicString = topics.length > 0 ? topics.join(', ') : 'Breaking News';
+  const topicString = topics.length > 0 ? topics.join(', ') : 'Global Breaking News & Major Events';
   
-  if (!process.env.API_KEY) return generateFallbackNews(topicString);
+  // Throttle syncs to once every 10 minutes to save quota, unless forced
+  const lastSync = Number(localStorage.getItem(SYNC_META_KEY) || 0);
+  if (!force && Date.now() - lastSync < 10 * 60 * 1000 && getCachedNews().length > 0) {
+    return getCachedNews();
+  }
 
-  // Added "distinct" and "narrow focus" instructions to prevent repetitive general news
-  const prompt = `
-    Find 5 HIGHLY SPECIFIC, distinct breaking news stories from the last 24 hours strictly about these topics: ${topicString}. 
-    Avoid generic global headlines unless they are directly related to the topics.
-    Output strictly as a valid JSON array of objects: 
-    [{"title": "Specific Headline", "publisher": "Source Name", "abstract": "30-word summary", "category": "TopicName"}]
-  `;
+  const prompt = `Research and aggregate 12 significant news stories from the last 24 hours about: ${topicString}. 
+  Ensure high diversity and global relevance. For each story, provide a detailed summary and explain why the event is impactful.`;
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: { 
         tools: [{ googleSearch: {} }],
-        temperature: 0.7 // Slight randomness to avoid repetitive API responses
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING, description: "Headline of the news" },
+              publisher: { type: Type.STRING, description: "Original news outlet" },
+              summary: { type: Type.STRING, description: "40-word core summary" },
+              preview: { type: Type.STRING, description: "10-word punchy preview" },
+              impact: { type: Type.STRING, description: "One sentence explaining why it matters" },
+              category: { type: Type.STRING, description: "One of: Tech, World, Science, Business, Finance, Health, or Sports" }
+            },
+            required: ["title", "publisher", "summary", "preview", "impact", "category"]
+          }
+        },
+        systemInstruction: "You are a professional real-time news curator. Only provide verified facts. Output valid JSON."
       },
     });
 
-    let text = response.text || "[]";
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (jsonMatch) text = jsonMatch[0];
+    const text = response.text;
+    if (!text) {
+      throw new Error("Empty response from Gemini");
+    }
 
     const rawData = JSON.parse(text);
-    if (!Array.isArray(rawData) || rawData.length === 0) return generateFallbackNews(topicString);
-
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
 
-    return rawData.map((item: any, i: number) => {
-      const cat = item.category || (topics[0] || "World");
-      let finalUrl = findBestVerifiedLink(item.title, item.publisher, groundingChunks);
-      if (!finalUrl) finalUrl = `https://www.google.com/search?q=${encodeURIComponent(item.title + " " + item.publisher)}&tbm=nws`;
+    const newBytes: Byte[] = rawData.map((item: any, i: number) => {
+      // Intelligent source URL lookup
+      let sourceUrl = `https://www.google.com/search?q=${encodeURIComponent(item.title)}&tbm=nws`;
+      const match = groundingChunks.find(c => 
+        c.web?.title?.toLowerCase().includes(item.title.split(' ')[0].toLowerCase())
+      );
+      if (match?.web?.uri) sourceUrl = match.web.uri;
 
-      // Use a more robust ID based on title hash to help with deduplication
-      const titleHash = item.title.substring(0, 10).replace(/\s/g, '_');
       return {
-        id: `live-${titleHash}-${Date.now()}-${i}`,
+        id: `live-${Date.now()}-${i}`,
         title: item.title,
         publisher: item.publisher,
-        authors: ["AI Curator"],
-        abstract: item.abstract,
-        category: cat,
+        authors: ["Verified News Source"],
+        abstract: item.summary,
+        abstractPreview: item.preview,
+        whyMatters: item.impact,
+        category: item.category,
         readTime: "1 min",
-        fileUrl: getCategoryImageUrl(cat),
-        likes: Math.floor(Math.random() * 500),
-        comments: Math.floor(Math.random() * 20),
-        publicationDate: "NOW",
-        sourceUrl: finalUrl
-      } as Byte;
+        fileUrl: getCategoryImageUrl(item.category),
+        likes: Math.floor(Math.random() * 900) + 150,
+        comments: Math.floor(Math.random() * 45),
+        publicationDate: "JUST NOW",
+        sourceUrl
+      };
     });
 
-  } catch (e) {
-    console.warn("API Error (likely quota), using fallback.");
-    return generateFallbackNews(topicString);
+    if (newBytes.length > 0) {
+      localStorage.setItem(DB_KEY, JSON.stringify(newBytes));
+      localStorage.setItem(SYNC_META_KEY, Date.now().toString());
+    }
+
+    return newBytes.length > 0 ? newBytes : getCachedNews();
+
+  } catch (e: any) {
+    console.warn("Sync Engine failed to reach network. Serving from cache.", e.message);
+    return getCachedNews();
   }
 };

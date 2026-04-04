@@ -2,8 +2,7 @@
 import React from 'react';
 
 /**
- * Byte interface representing a news item in the feed.
- * Includes optional fields used by ProductCard and ProductDetail components.
+ * Byte interface representing a high-signal news item.
  */
 export interface Byte {
   id: string;
@@ -11,8 +10,8 @@ export interface Byte {
   publisher: string;
   authors: string[];
   abstract: string;
-  abstractPreview?: string; // Used in ProductCard.tsx
-  whyMatters?: string;       // Used in ProductDetail.tsx
+  abstractPreview?: string; 
+  whyMatters?: string;       
   publicationDate: string;
   category: string;
   readTime: string;
@@ -27,10 +26,6 @@ export interface Byte {
 
 export type Paper = Byte;
 
-/**
- * JournalArticle interface for specific journal content views.
- * Fixes "no exported member 'JournalArticle'" error in JournalDetail.tsx.
- */
 export interface JournalArticle {
   id: string;
   title: string;
