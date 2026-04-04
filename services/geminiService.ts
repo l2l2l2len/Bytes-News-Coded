@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
 import { Byte } from '../types';
 
 const DB_KEY = 'bytes_news_cache_v2';
@@ -45,7 +45,7 @@ export const fetchRealTimeNews = async (topics: string[], force = false): Promis
     return getCachedNews();
   }
 
-  const prompt = `Research and aggregate 12 significant news stories from the last 24 hours about: ${topicString}. 
+  const prompt = `Research and aggregate 8 significant news stories from the last 24 hours about: ${topicString}. 
   Ensure high diversity and global relevance. For each story, provide a detailed summary and explain why the event is impactful.`;
 
   try {
@@ -56,6 +56,7 @@ export const fetchRealTimeNews = async (topics: string[], force = false): Promis
       config: { 
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
+        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
         responseSchema: {
           type: Type.ARRAY,
           items: {
