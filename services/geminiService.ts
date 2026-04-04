@@ -26,30 +26,46 @@ export const getCachedNews = (): Byte[] => {
   return data ? JSON.parse(data) : [];
 };
 
+const cleanApiKey = (key: string): string => {
+  let cleaned = key.trim();
+  // Handle doubled keys (e.g., KeyAKeyA)
+  if (cleaned.length > 40 && cleaned.length % 2 === 0) {
+    const half = cleaned.length / 2;
+    const firstHalf = cleaned.substring(0, half);
+    const secondHalf = cleaned.substring(half);
+    if (firstHalf === secondHalf) {
+      return firstHalf;
+    }
+  }
+  return cleaned;
+};
+
 /**
  * PRODUCTION-GRADE NEWS SYNC ENGINE
  * Uses gemini-3-flash-preview for speed and Google Search for accuracy.
  */
 export const fetchRealTimeNews = async (topics: string[], force = false): Promise<Byte[]> => {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  const rawKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  // Handle cases where Vite might stringify "undefined" or empty values
+  let apiKey = (rawKey && rawKey !== 'undefined' && rawKey !== 'null') ? rawKey : null;
+
   if (!apiKey) {
-    console.error("Gemini API Key missing. Please set the GEMINI_API_KEY environment variable.");
+    console.warn("Gemini API Key missing or invalid. Please set GEMINI_API_KEY in Settings.");
     return getCachedNews();
   }
 
-  const topicString = topics.length > 0 ? topics.join(', ') : 'Global Breaking News & Major Events';
-  
   // Throttle syncs to once every 10 minutes to save quota, unless forced
   const lastSync = Number(localStorage.getItem(SYNC_META_KEY) || 0);
   if (!force && Date.now() - lastSync < 10 * 60 * 1000 && getCachedNews().length > 0) {
     return getCachedNews();
   }
 
-  const prompt = `Research and aggregate 8 significant news stories from the last 24 hours about: ${topicString}. 
-  Ensure high diversity and global relevance. For each story, provide a detailed summary and explain why the event is impactful.`;
+  const prompt = `Research and aggregate 8 significant news stories from the last 24 hours about: ${topics.length > 0 ? topics.join(', ') : 'Global Breaking News & Major Events'}. 
+  Ensure high diversity and global relevance. For each story, provide a detailed summary and explain why the event is impactful.
+  Return the data as a JSON array of objects.`;
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey: cleanApiKey(apiKey) });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
@@ -72,16 +88,22 @@ export const fetchRealTimeNews = async (topics: string[], force = false): Promis
             required: ["title", "publisher", "summary", "preview", "impact", "category"]
           }
         },
-        systemInstruction: "You are a professional real-time news curator. Only provide verified facts. Output valid JSON."
+        systemInstruction: "You are a professional real-time news curator. Use Google Search to find the latest stories. Output valid JSON only."
       },
     });
 
     const text = response.text;
     if (!text) {
-      throw new Error("Empty response from Gemini");
+      throw new Error("Empty response from Gemini. Check if the API key has sufficient permissions.");
     }
 
-    const rawData = JSON.parse(text);
+    let rawData;
+    try {
+      rawData = JSON.parse(text);
+    } catch (parseError) {
+      console.error("Failed to parse Gemini response as JSON:", text);
+      throw new Error("Invalid JSON response from model.");
+    }
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
 
     const newBytes: Byte[] = rawData.map((item: any, i: number) => {
